@@ -82,24 +82,27 @@ comandos:
 
 %%
 
-int main (int argc, char** argv) {
+int main (int argc, char** argv) 
+{
    FILE* fp;
    extern FILE* yyin;
 
-   if (argc<2 || argc>2) {
-         printf("usage compilador <arq>a %d\n", argc);
-         return(-1);
-      }
+   if (argc<2 || argc>2)
+   {
+      printf("usage compilador <arq>a %d\n", argc);
+      return(-1);
+   }
 
    fp=fopen (argv[1], "r");
-   if (fp == NULL) {
+   if (fp == NULL) 
+   {
       printf("usage compilador <arq>b\n");
       return(-1);
    }
 
 
 /* -------------------------------------------------------------------
- *  Inicia a Tabela de S�mbolos
+ *  Inicia a Tabela de Símbolos
  * ------------------------------------------------------------------- */
 
    yyin=fp;
