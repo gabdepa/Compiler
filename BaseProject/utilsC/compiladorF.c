@@ -1,29 +1,12 @@
-
-/* -------------------------------------------------------------------
- *            Aquivo: compilador.c
- * -------------------------------------------------------------------
- *              Autor: Bruno Muller Junior
- *               Data: 08/2007
- *      Atualizado em: [09/08/2020, 19h:01m]
- *
- * -------------------------------------------------------------------
- *
- * Funções auxiliares ao compilador
- *
- * ------------------------------------------------------------------- */
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "../utilsH/compilador.h"
 
-
-/* -------------------------------------------------------------------
- *  variáveis globais
- * ------------------------------------------------------------------- */
-
+/*********************GLOBAL VARIABLES*********************/
 simbolos simbolo, relacao;
 char token[TAM_TOKEN];
+/*********************GLOBAL VARIABLES*********************/
 
 FILE* fp=NULL;
 void geraCodigo (char* rot, char* comando) {

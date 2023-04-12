@@ -1,16 +1,3 @@
-/* -------------------------------------------------------------------
- *            Arquivo: compilador.h
- * -------------------------------------------------------------------
- *              Autor: Bruno Muller Junior
- *               Data: 08/2007
- *      Atualizado em: [09/08/2020, 19h:01m]
- *
- * -------------------------------------------------------------------
- *
- * Tipos, protótipos e variáveis globais do compilador (via extern)
- *
- * ------------------------------------------------------------------- */
-
 #define TAM_TOKEN 37
 
 typedef enum simbolos
@@ -54,20 +41,16 @@ typedef enum simbolos
   simb_identificador,
 } simbolos;
 
-/* -------------------------------------------------------------------
- * variáveis globais
- * ------------------------------------------------------------------- */
-
+/*********************GLOBAL VARIABLES*********************/
 extern simbolos simbolo, relacao;
 extern char token[TAM_TOKEN];
 extern int nivel_lexico;
 extern int desloc;
 extern int nl;
+/*********************GLOBAL VARIABLES*********************/
 
-/* -------------------------------------------------------------------
- * prototipos globais
- * ------------------------------------------------------------------- */
-
+/*********************GLOBAL PROTOTYPES*********************/
 void geraCodigo(char *, char *);
 int yylex();
 void yyerror(const char *s);
+/*********************GLOBAL PROTOTYPES*********************/
