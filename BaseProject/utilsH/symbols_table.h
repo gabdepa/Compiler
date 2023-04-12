@@ -3,7 +3,6 @@
 
 #define ALLOC_STEP 1024
 
-#define CAT_INDEFINIDA 0
 #define SIMPLE_VAR 1
 #define FORMAL_PARAMETER 2
 #define PROCEDURE_C 3

@@ -18,8 +18,11 @@ lex.yy.c: compilador.l ./utilsH/compilador.h
 compilador.tab.c: compilador.y ./utilsH/compilador.h
 	bison compilador.y -d -v
 
-compilador.o : ./utilsH/compilador.h ./utilsC/compiladorF.c
+compilador.o: ./utilsH/compilador.h ./utilsC/compiladorF.c
 	gcc -c ./utilsC/compiladorF.c -o compilador.o
 
-clean :
+clean:
 	rm -f compilador.tab.* lex.yy.c compilador.o compilador
+
+purge: clean
+	
