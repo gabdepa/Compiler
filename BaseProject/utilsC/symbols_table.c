@@ -212,8 +212,8 @@ void appendSymbol(symbols_table *table, symbols *symbol)
         // Resize the 'stack' field of the symbols_table struct pointed to by 'table' using the realloc function. Increase the allocated size by ALLOC_STEP (assumed to be a constant) and multiply the result by the size of symbols.
         table->stack = realloc(table->stack, (table->allocated_size + ALLOC_STEP) * sizeof(symbols));
     }
-    // Check if the 'category' field of the symbols struct pointed to by 'symbol' is equal to PROCEDURE.
-    if (symbol->category == PROCEDURE)
+    // Check if the 'category' field of the symbols struct pointed to by 'symbol' is equal to PROCEDURE_C.
+    if (symbol->category == PROCEDURE_C)
     {
         // If the symbol is a procedure, call the setParams function to update the 'params' field of the procedure_av struct.
         setParams(symbol);
@@ -262,7 +262,7 @@ void removeSymbol(symbols_table *table, unsigned int n)
         // Decrement the 'size' field of the symbols_table struct pointed to by 'table' by 1.
         table->size--;
         // Call the deleteAttributes function to free the memory associated with the attributes of the symbols struct at the current position 'table->size' in the symbols table.
-        deleteAttributes(&(table->stack[table->size]));
+        deleteAttributes( &(table->stack[table->size]) );
         // Decrement 'n' by 1 to continue the loop.
         n--;
     }

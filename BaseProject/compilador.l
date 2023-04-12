@@ -8,7 +8,7 @@
 #include<stdio.h>
 #include<string.h>
 
-#include "compilador.h"
+#include "./utilsH/compilador.h"
 #include "compilador.tab.h"
 
 //#define IMPRIME(STR) {};

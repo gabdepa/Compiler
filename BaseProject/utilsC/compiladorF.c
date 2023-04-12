@@ -15,7 +15,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "compilador.h"
+#include "../utilsH/compilador.h"
 
 
 /* -------------------------------------------------------------------

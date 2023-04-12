@@ -6,7 +6,7 @@
 #define CAT_INDEFINIDA 0
 #define SIMPLE_VAR 1
 #define FORMAL_PARAMETER 2
-#define PROCEDURE 3
+#define PROCEDURE_C 3
 
 #define VALUE_PASSAGE 1
 #define REFERENCE_PASSAGE 2
@@ -25,7 +25,7 @@ typedef struct symbols_table_s
 {
     symbols *stack;
     unsigned int size;
-    unsigned int alloc_size;
+    unsigned int allocated_size;
 } symbols_table;
 
 typedef struct simple_var_av_s
