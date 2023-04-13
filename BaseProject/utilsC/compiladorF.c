@@ -6,9 +6,10 @@
 /*********************GLOBAL VARIABLES*********************/
 simbolos simbolo, relacao;
 char token[TAM_TOKEN];
+FILE* fp=NULL;
 /*********************GLOBAL VARIABLES*********************/
 
-FILE* fp=NULL;
+
 void geraCodigo (char* rot, char* comando) {
 
   if (fp == NULL) {

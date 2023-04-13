@@ -27,60 +27,41 @@ int num_vars;
 
 %%
 
-programa    :{
-             geraCodigo (NULL, "INPP");
-             }
+programa :{ geraCodigo (NULL, "INPP"); }
              PROGRAM IDENT
              ABRE_PARENTESES lista_idents FECHA_PARENTESES PONTO_E_VIRGULA
-             bloco PONTO {
-             geraCodigo (NULL, "PARA");
-             }
-;
+             bloco PONTO { geraCodigo (NULL, "PARA"); };
 
-bloco       :
-              parte_declara_vars
-              {
-              }
+bloco : parte_declara_vars {  } comando_composto;
 
-              comando_composto
-              ;
-
-parte_declara_vars:  var
-;
+parte_declara_vars :  var;
 
 
-var         : { num_vars = 0; } VAR declara_vars {
+var : { num_vars = 0; } VAR declara_vars 
+             {
                sprintf(buffer, "AMEM %d", num_vars);
                geraCodigo(NULL, buffer);
              }
             |
 ;
 
-declara_vars: declara_vars declara_var
-            | declara_var
+declara_vars : declara_vars declara_var | declara_var
 ;
 
 declara_var : { }
               lista_id_var DOIS_PONTOS
               tipo
-              {
-              }
+              { }
               PONTO_E_VIRGULA
 ;
 
-tipo        : IDENT
-;
+tipo : IDENT;
 
-lista_id_var: lista_id_var VIRGULA IDENT {
-   /* insere �ltima vars na tabela de s�mbolos */
-   num_vars++;
-}
-            | IDENT { num_vars++; /* insere vars na tabela de s�mbolos */ }
-;
+lista_id_var : lista_id_var VIRGULA IDENT { num_vars++; /* insert last vars on the symbols table */ }
+              |
+              IDENT { num_vars++; /* insert vars on the symbols table */ };
 
-lista_idents: lista_idents VIRGULA IDENT
-            | IDENT
-;
+lista_idents: lista_idents VIRGULA IDENT | IDENT;
 
 
 comando_composto: T_BEGIN comandos T_END
