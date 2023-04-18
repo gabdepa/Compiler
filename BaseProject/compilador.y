@@ -23,8 +23,8 @@ int num_vars;
 %token ASTERISCO ATRIBUICAO PONTO_E_VIRGULA DOIS_PONTOS
 %token VIRGULA PONTO ABRE_PARENTESES FECHA_PARENTESES
 %token ABRE_COLCHETES FECHA_COLCHETES ABRE_CHAVES FECHA_CHAVES
-%token MAIOR MENOR NUMERO IDENT
-
+%token IGUAL DIFERENTE 
+%token MAIOR MAIOR_OU_IGUAL MENOR MENOR_OU_IGUAL NUMERO IDENT
 %%
 
 programa :{ geraCodigo (NULL, "INPP"); }
@@ -68,6 +68,44 @@ comando_composto: T_BEGIN comandos T_END
 
 comandos:
 ;
+
+
+// REGRA 25
+// <expressao> ::=
+//    <expressao simples> [<relacao><expressao simples>]
+expressao: expressao_simples
+				 	 | expressao_simples relacao expressao_simples { geraOperacao(operacao); }
+;
+// REGRA 26
+// <relacao> ::=  =|<>|<|<=|>=|>
+relacao: IGUAL { operacao = T_IGUAL; }
+			   | DIFERENTE { operacao = T_DIFERENTE; }
+				| MENOR { operacao = T_MENOR; }
+				| MENOR_OU_IGUAL { operacao = T_MENOR_OU_IGUAL; }
+				| MAIOR_OU_IGUAL { operacao = T_MAIOR_OU_IGUAL; }
+				| MAIOR { operacao = T_MAIOR; }
+; 
+// REGRA 27
+// <expressao simples> ::=
+//     [+|-] <termo>{(+|-|or) <termo>}
+
+// REGRA 28
+// <termo> ::=
+//     <fator> {(*|div|and) <fator>}
+
+// REGRA 29
+// <fator>::=
+//    <variável>
+//    | <número>
+//    | <chamada de função>
+//    | (<expressão>)
+//    | not <fator>
+
+// REGRA 30
+// <variável> ::=
+//    <identificador>
+//    | <identificador> [<lista de expressões>]
+
 
 %%
 
