@@ -21,8 +21,8 @@ enum variable_type
 
 enum passage_type
 {
-    parameter_copia,
-    parameter_ref
+    copy_parameter,
+    reference_parameter
 };
 
 /* 3 symbols type */
@@ -41,7 +41,7 @@ struct parameter
 
 struct procedure
 {
-    int rotulo;
+    int label;
     int parameters_quantity;
     struct parameter list[128];
 };
