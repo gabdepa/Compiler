@@ -1,29 +1,27 @@
-#define TAM_TOKEN 37
+#define TAM_TOKEN 45
 
 typedef enum simbolos
 {
   simb_program,
-  simb_var,
-  simb_begin,
-  simb_end,
   simb_label,
   simb_type,
   simb_array,
   simb_of,
+  simb_var,
   simb_procedure,
   simb_function,
+  simb_begin,
+  simb_end,
   simb_goto,
   simb_if,
   simb_then,
   simb_else,
-  simb_for,
-  simb_do,
   simb_while,
+  simb_do,
   simb_or,
   simb_and,
   simb_not,
   simb_div,
-  simb_asterisco,
   simb_atribuicao,
   simb_ponto_e_virgula,
   simb_dois_pontos,
@@ -35,22 +33,37 @@ typedef enum simbolos
   simb_fecha_colchetes,
   simb_abre_chaves,
   simb_fecha_chaves,
+  simb_identificador,
+  simb_numero,
   simb_maior,
   simb_menor,
-  simb_numero,
-  simb_identificador,
+  simb_igual,
+  simb_mais,
+  simb_menos,
+  simb_vezes,
+  simb_diferente,
+  simb_menor_igual,
+  simb_maior_igual,
+  simb_valor_bool,
+  simb_tipo,
+  simb_read,
+  simb_write
 } simbolos;
 
-/*********************GLOBAL VARIABLES*********************/
+/* -------------------------------------------------------------------
+ * variáveis globais
+ * ------------------------------------------------------------------- */
+
 extern simbolos simbolo, relacao;
 extern char token[TAM_TOKEN];
 extern int nivel_lexico;
 extern int desloc;
 extern int nl;
-/*********************GLOBAL VARIABLES*********************/
 
-/*********************GLOBAL PROTOTYPES*********************/
+/* -------------------------------------------------------------------
+ * prototipos globais
+ * ------------------------------------------------------------------- */
+
 void geraCodigo(char *, char *);
 int yylex();
 void yyerror(const char *s);
-/*********************GLOBAL PROTOTYPES*********************/
