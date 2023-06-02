@@ -738,10 +738,10 @@ int main (int argc, char** argv) {
  * ------------------------------------------------------------------- */
    table_init(&ts);
    table_init(&pilha_atribuicao);
-   stack_int_init(&pilha_labels);
-   stack_int_init(&pilha_amem);
-   stack_int_init(&pilha_procs);
-   stack_symbols_table_init(&pilha_ident_esquerdo);
+   stack_init(&pilha_labels, NULL);
+   stack_init(&pilha_amem, NULL);
+   stack_init(&pilha_procs, NULL);
+   stack_init(NULL, &pilha_ident_esquerdo);
 
    yyin=fp;
    yyparse();

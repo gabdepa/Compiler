@@ -4,19 +4,42 @@
 #include "../utilsH/symbols_table.h"
 #include "../utilsH/stack.h"
 
-void stack_symbols_table_init(struct stack_symbols_table *s)
+void stack_init(struct stack_int *si, struct stack_symbols_table *sst)
 {
-    s->stack = NULL;
-    s->size = 0;
-    s->head = 0;
+    if (si && sst)
+    {
+        si->stack = NULL;
+        si->size = 0;
+        si->head = 0;
+        sst->stack = NULL;
+        sst->size = 0;
+        sst->head = 0;
+    }
+    else if (si && !sst)
+    {
+        si->stack = NULL;
+        si->size = 0;
+        si->head = 0;
+    }
+    else if (!si && sst)
+    {
+        sst->stack = NULL;
+        sst->size = 0;
+        sst->head = 0;
+    }
+    else
+    {
+        fprintf(stderr, "Both pointers are NULL, exiting...\n");
+        exit(0);
+    }
 }
 
-void stack_int_init(struct stack_int *s)
-{
-    s->stack = NULL;
-    s->size = 0;
-    s->head = 0;
-}
+// void stack_int_init(struct stack_int *s)
+// {
+//     s->stack = NULL;
+//     s->size = 0;
+//     s->head = 0;
+// }
 
 void stack_symbols_table_push(struct stack_symbols_table *s, struct symbol *simb)
 {

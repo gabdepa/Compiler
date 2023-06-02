@@ -18,9 +18,7 @@ struct stack_int
     unsigned int head;
 };
 
-void stack_symbols_table_init(struct stack_symbols_table *s);
-
-void stack_int_init(struct stack_int *s);
+void stack_init(struct stack_int *si, struct stack_symbols_table *sst);
 
 void stack_symbols_table_push(struct stack_symbols_table *s, struct symbol *num);
 
