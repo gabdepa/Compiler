@@ -20,9 +20,7 @@ struct stack_int
 
 void stack_init(struct stack_int *si, struct stack_symbols_table *sst);
 
-void stack_symbols_table_push(struct stack_symbols_table *s, struct symbol *num);
-
-void stack_int_push(struct stack_int *s, const int num);
+void stack_push(struct stack_int *si, const int num, struct stack_symbols_table *sst, struct symbol *symbol);
 
 int stack_int_head(struct stack_int *s);
 

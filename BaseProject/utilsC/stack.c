@@ -34,47 +34,50 @@ void stack_init(struct stack_int *si, struct stack_symbols_table *sst)
     }
 }
 
-// void stack_int_init(struct stack_int *s)
-// {
-//     s->stack = NULL;
-//     s->size = 0;
-//     s->head = 0;
-// }
-
-void stack_symbols_table_push(struct stack_symbols_table *s, struct symbol *simb)
+void stack_push(struct stack_int *si, const int num, struct stack_symbols_table *sst, struct symbol *symbol)
 {
-
-    if (s->head == s->size)
+    if (sst && !si)
     {
-        struct symbol **auxstr = NULL;
-        s->size += STACK_INCREMENT;
-        auxstr = realloc(s->stack, s->size * sizeof(struct symbol *));
-        if (auxstr == NULL)
+        if (!symbol)
         {
-            fprintf(stderr, "Erro alocando stack de inteiros! Abortando srograma...\n");
+            fprintf(stderr, "Pointer symbol is NULL, exiting...\n");
             exit(0);
         }
-        s->stack = auxstr;
-    }
-    s->stack[s->head++] = simb;
-}
-
-void stack_int_push(struct stack_int *s, const int num)
-{
-
-    if (s->head == s->size)
-    {
-        int *auxstr = NULL;
-        s->size += STACK_INCREMENT;
-        auxstr = realloc(s->stack, s->size * sizeof(int));
-        if (auxstr == NULL)
+        if (sst->head == sst->size)
         {
-            fprintf(stderr, "Erro alocando stack de inteiros! Abortando srograma...\n");
-            exit(0);
+            struct symbol **auxstr = NULL;
+            sst->size += STACK_INCREMENT;
+            auxstr = realloc(sst->stack, sst->size * sizeof(struct symbol *));
+            if (auxstr == NULL)
+            {
+                fprintf(stderr, "Erro alocando stack de inteiros! Abortando srograma...\n");
+                exit(0);
+            }
+            sst->stack = auxstr;
         }
-        s->stack = auxstr;
+        sst->stack[sst->head++] = symbol;
     }
-    s->stack[s->head++] = num;
+    else if (!sst && si)
+    {
+        if (si->head == si->size)
+        {
+            int *auxstr = NULL;
+            si->size += STACK_INCREMENT;
+            auxstr = realloc(si->stack, si->size * sizeof(int));
+            if (auxstr == NULL)
+            {
+                fprintf(stderr, "Erro alocando stack de inteiros! Abortando srograma...\n");
+                exit(0);
+            }
+            si->stack = auxstr;
+        }
+        si->stack[si->head++] = num;
+    }
+    else
+    {
+        fprintf(stderr, "Both Pointers passed are valid, exiting...\n");
+        exit(0);
+    }
 }
 
 int stack_int_head(struct stack_int *s)

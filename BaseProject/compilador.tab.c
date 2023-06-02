@@ -651,12 +651,12 @@ static const yytype_int16 yyrline[] =
      169,   178,   179,   180,   186,   191,   223,   184,   238,   246,
      277,   236,   290,   290,   292,   297,   297,   301,   300,   315,
      315,   318,   322,   322,   325,   326,   327,   328,   329,   330,
-     333,   335,   335,   338,   352,   354,   354,   358,   357,   369,
-     369,   370,   371,   374,   403,   421,   403,   438,   449,   456,
-     449,   472,   472,   476,   489,   476,   505,   506,   512,   511,
-     518,   524,   525,   536,   537,   538,   539,   540,   541,   545,
-     563,   579,   580,   581,   584,   585,   586,   590,   607,   610,
-     611,   612,   616,   620,   626,   625,   688,   693,   701,   702
+     333,   335,   335,   338,   352,   354,   354,   358,   357,   368,
+     368,   369,   370,   373,   402,   420,   402,   437,   448,   455,
+     448,   471,   471,   475,   488,   475,   504,   505,   511,   510,
+     517,   523,   524,   535,   536,   537,   538,   539,   540,   544,
+     562,   578,   579,   580,   583,   584,   585,   589,   606,   609,
+     610,   611,   615,   619,   625,   624,   687,   692,   700,   701
 };
 #endif
 
@@ -1359,7 +1359,7 @@ yyreduce:
               {
                sprintf(mepa_buf, "DSVS R%02d", rot_num);
                geraCodigo(NULL, mepa_buf);
-               stack_int_push(&pilha_labels, rot_num);
+               stack_push(&pilha_labels, rot_num, NULL, NULL); // stack_int_push
                rot_num++;
                level_lex++;
                nr_procs_for_curr_proc = 0;
@@ -1370,7 +1370,7 @@ yyreduce:
   case 5: /* $@3: %empty  */
 #line 106 "compilador.y"
               {
-               stack_int_push(&pilha_procs, nr_procs_for_curr_proc);
+               stack_push(&pilha_procs, nr_procs_for_curr_proc, NULL, NULL); // stack_int_push
                level_lex--;
 
                sprintf(rot_str, "R%02d", stack_int_head(&pilha_labels));
@@ -1402,14 +1402,14 @@ yyreduce:
                                                        { 
                sprintf(mepa_buf, "AMEM %d", num_vars);
                geraCodigo(NULL, mepa_buf);
-               stack_int_push(&pilha_amem, num_vars);
+               stack_push(&pilha_amem, num_vars, NULL, NULL); // stack_int_push
                }
 #line 1408 "compilador.tab.c"
     break;
 
   case 9: /* parte_declara_vars: %empty  */
 #line 131 "compilador.y"
-              {stack_int_push(&pilha_amem, 0);}
+              {stack_push(&pilha_amem, 0, NULL, NULL);}
 #line 1414 "compilador.tab.c"
     break;
 
@@ -1506,7 +1506,7 @@ yyreduce:
                   push(&ts, list_symbols[i]);
                }
                rot_num++; // para o desvio de procedures dentro dessa procedure
-               stack_int_push(&pilha_amem, num_params);
+               stack_push(&pilha_amem, num_params, NULL, NULL); // stack_int_push
 
                // dentro_proc = 1;
               }
@@ -1561,7 +1561,7 @@ yyreduce:
                   push(&ts, list_symbols[i]);
                }
                rot_num++; // para o desvio de procedures dentro dessa procedure
-               stack_int_push(&pilha_amem, num_params);
+               stack_push(&pilha_amem, num_params, NULL, NULL); // stack_int_push
 
                // dentro_proc = 1;
               }
@@ -1645,34 +1645,33 @@ yyreduce:
                   { 
                      // printf("Buscando o token %s\n", token);
                      sptr_var_proc = search(&ts, token); 
-                     // printf("Variavel %s tem offset %d\n", sptr_var_proc->id, sptr_var_proc->content.var.offset);
-                     stack_symbols_table_push(&pilha_ident_esquerdo, sptr_var_proc);
+                     stack_push(NULL, 0, &pilha_ident_esquerdo, sptr_var_proc); // symbols_table_push
                   }
-#line 1652 "compilador.tab.c"
+#line 1651 "compilador.tab.c"
     break;
 
   case 58: /* atribuicao_proc: IDENT $@14 a_continua  */
-#line 365 "compilador.y"
+#line 364 "compilador.y"
                   { 
                      stack_symbols_table_pop(&pilha_ident_esquerdo);
                   }
-#line 1660 "compilador.tab.c"
+#line 1659 "compilador.tab.c"
     break;
 
   case 59: /* $@15: %empty  */
-#line 369 "compilador.y"
+#line 368 "compilador.y"
                        {atribui = 1;}
-#line 1666 "compilador.tab.c"
+#line 1665 "compilador.tab.c"
     break;
 
   case 60: /* a_continua: ATRIBUICAO $@15 atribuicao  */
-#line 369 "compilador.y"
+#line 368 "compilador.y"
                                                 {atribui = 0;}
-#line 1672 "compilador.tab.c"
+#line 1671 "compilador.tab.c"
     break;
 
   case 63: /* atribuicao: expression  */
-#line 374 "compilador.y"
+#line 373 "compilador.y"
                        {
    sptr_var_proc = stack_symbols_table_head(&pilha_ident_esquerdo);
    if(sptr_var_proc->content.var.type != (yyvsp[0].int_val)){
@@ -1698,11 +1697,11 @@ yyreduce:
    }
    geraCodigo(NULL, mepa_buf);
 }
-#line 1702 "compilador.tab.c"
+#line 1701 "compilador.tab.c"
     break;
 
   case 64: /* $@16: %empty  */
-#line 403 "compilador.y"
+#line 402 "compilador.y"
              {
                sptr_var_proc = stack_symbols_table_head(&pilha_ident_esquerdo);
 
@@ -1720,20 +1719,20 @@ yyreduce:
               }
               sprintf(proc_name, "CHPR R%02d, %d", sptr_var_proc->content.proc.label, level_lex);
              }
-#line 1724 "compilador.tab.c"
+#line 1723 "compilador.tab.c"
     break;
 
   case 65: /* $@17: %empty  */
-#line 421 "compilador.y"
+#line 420 "compilador.y"
              {
                curr_call_params = 0;
                dentro_chamada_proc++;
              }
-#line 1733 "compilador.tab.c"
+#line 1732 "compilador.tab.c"
     break;
 
   case 66: /* procedure: $@16 ABRE_PARENTESES $@17 list_expressoes FECHA_PARENTESES  */
-#line 427 "compilador.y"
+#line 426 "compilador.y"
              {
                dentro_chamada_proc--;
                if(curr_call_params != curr_proc.content.proc.parameters_quantity){
@@ -1742,11 +1741,11 @@ yyreduce:
                }
                geraCodigo(NULL, proc_name);
              }
-#line 1746 "compilador.tab.c"
+#line 1745 "compilador.tab.c"
     break;
 
   case 67: /* procedure_sem_parameter: %empty  */
-#line 438 "compilador.y"
+#line 437 "compilador.y"
               {
                sptr_var_proc = stack_symbols_table_head(&pilha_ident_esquerdo);
                if(!sptr_var_proc){
@@ -1756,32 +1755,32 @@ yyreduce:
                sprintf(mepa_buf, "CHPR R%02d, %d", sptr_var_proc->content.proc.label, level_lex);
                geraCodigo(NULL, mepa_buf);
               }
-#line 1760 "compilador.tab.c"
+#line 1759 "compilador.tab.c"
     break;
 
   case 68: /* $@18: %empty  */
-#line 449 "compilador.y"
+#line 448 "compilador.y"
                            {
-                        stack_int_push(&pilha_labels, rot_num);
+                        stack_push(&pilha_labels, rot_num, NULL, NULL); // stack_int_push
                          
                         sprintf(rot_str, "R%02d", rot_num);
                         geraCodigo(rot_str, "NADA");
                         rot_num += 2;
                      }
-#line 1772 "compilador.tab.c"
+#line 1771 "compilador.tab.c"
     break;
 
   case 69: /* $@19: %empty  */
-#line 456 "compilador.y"
+#line 455 "compilador.y"
                                 {
                         sprintf(mepa_buf, "DSVF R%02d", stack_int_head(&pilha_labels)+1);
                         geraCodigo(NULL, mepa_buf); // falta testar expressão
                      }
-#line 1781 "compilador.tab.c"
+#line 1780 "compilador.tab.c"
     break;
 
   case 70: /* comando_repetitivo: WHILE $@18 expression $@19 DO comando_sem_label_ou_composto  */
-#line 461 "compilador.y"
+#line 460 "compilador.y"
                                                    {
                         sprintf(mepa_buf, "DSVS R%02d", stack_int_head(&pilha_labels));
                         geraCodigo(NULL, mepa_buf);
@@ -1791,11 +1790,11 @@ yyreduce:
 
                         stack_int_pop(&pilha_labels);
                      }
-#line 1795 "compilador.tab.c"
+#line 1794 "compilador.tab.c"
     break;
 
   case 73: /* $@20: %empty  */
-#line 476 "compilador.y"
+#line 475 "compilador.y"
                                    {
                         if ((yyvsp[0].int_val) != pas_boolean){
                            fprintf(stderr, "COMPILATION ERROR!!!\n If expression is not boolean!\n");
@@ -1804,15 +1803,15 @@ yyreduce:
 
                         sprintf(mepa_buf, "DSVF R%02d", rot_num+1);
                         geraCodigo(NULL, mepa_buf); // falta testar expressão
-
-                        stack_int_push(&pilha_labels, rot_num);
+                        
+                        stack_push(&pilha_labels, rot_num, NULL, NULL);// stack_int_push
                         rot_num += 2;
                      }
-#line 1812 "compilador.tab.c"
+#line 1811 "compilador.tab.c"
     break;
 
   case 74: /* $@21: %empty  */
-#line 489 "compilador.y"
+#line 488 "compilador.y"
                                                    {
                         sprintf(mepa_buf, "DSVS R%02d", stack_int_head(&pilha_labels));
                         geraCodigo(NULL, mepa_buf);
@@ -1821,46 +1820,46 @@ yyreduce:
                         geraCodigo(rot_str, "NADA");
 
                      }
-#line 1825 "compilador.tab.c"
+#line 1824 "compilador.tab.c"
     break;
 
   case 75: /* comando_condicional: IF expression $@20 THEN comando_sem_label_ou_composto $@21 else_ou_nada  */
-#line 497 "compilador.y"
+#line 496 "compilador.y"
                                  {
                         sprintf(rot_str, "R%02d", stack_int_head(&pilha_labels));
                         geraCodigo(rot_str, "NADA");
 
                         stack_int_pop(&pilha_labels);
                      }
-#line 1836 "compilador.tab.c"
+#line 1835 "compilador.tab.c"
     break;
 
   case 78: /* $@22: %empty  */
-#line 512 "compilador.y"
+#line 511 "compilador.y"
                   {  
                      // curr_section_params++;
                      curr_call_params++;
                   }
-#line 1845 "compilador.tab.c"
+#line 1844 "compilador.tab.c"
     break;
 
   case 80: /* list_expressoes: expression  */
-#line 519 "compilador.y"
+#line 518 "compilador.y"
                   {
                      // curr_section_params++;
                      curr_call_params++;
                   }
-#line 1854 "compilador.tab.c"
+#line 1853 "compilador.tab.c"
     break;
 
   case 81: /* expression: simple_expression  */
-#line 524 "compilador.y"
+#line 523 "compilador.y"
                                  { (yyval.int_val) = (yyvsp[0].int_val); }
-#line 1860 "compilador.tab.c"
+#line 1859 "compilador.tab.c"
     break;
 
   case 82: /* expression: simple_expression relation simple_expression  */
-#line 525 "compilador.y"
+#line 524 "compilador.y"
                                                           {
                if ((yyvsp[-2].int_val) != (yyvsp[0].int_val)){
                   fprintf(stderr, "COMPILATION ERROR!!!\nCannot compare expressions with different types!\n");
@@ -1869,47 +1868,47 @@ yyreduce:
                geraCodigo(NULL, (yyvsp[-1].str));
                (yyval.int_val) = pas_boolean;
             }
-#line 1873 "compilador.tab.c"
+#line 1872 "compilador.tab.c"
     break;
 
   case 83: /* relation: IGUAL  */
-#line 536 "compilador.y"
+#line 535 "compilador.y"
                          { (yyval.str) = "CMIG"; }
-#line 1879 "compilador.tab.c"
+#line 1878 "compilador.tab.c"
     break;
 
   case 84: /* relation: DIFERENTE  */
-#line 537 "compilador.y"
+#line 536 "compilador.y"
                         { (yyval.str) = "CMDG"; }
-#line 1885 "compilador.tab.c"
+#line 1884 "compilador.tab.c"
     break;
 
   case 85: /* relation: MENOR  */
-#line 538 "compilador.y"
+#line 537 "compilador.y"
                         { (yyval.str) = "CMME"; }
-#line 1891 "compilador.tab.c"
+#line 1890 "compilador.tab.c"
     break;
 
   case 86: /* relation: MENOR_IGUAL  */
-#line 539 "compilador.y"
+#line 538 "compilador.y"
                         { (yyval.str) = "CMEG"; }
-#line 1897 "compilador.tab.c"
+#line 1896 "compilador.tab.c"
     break;
 
   case 87: /* relation: MAIOR_IGUAL  */
-#line 540 "compilador.y"
+#line 539 "compilador.y"
                         { (yyval.str) = "CMAG"; }
-#line 1903 "compilador.tab.c"
+#line 1902 "compilador.tab.c"
     break;
 
   case 88: /* relation: MAIOR  */
-#line 541 "compilador.y"
+#line 540 "compilador.y"
                         { (yyval.str) = "CMMA"; }
-#line 1909 "compilador.tab.c"
+#line 1908 "compilador.tab.c"
     break;
 
   case 89: /* simple_expression: simple_expression plus_minus_or term  */
-#line 545 "compilador.y"
+#line 544 "compilador.y"
                                                          {
                      if (strcmp((yyvsp[-1].str), "DISJ") == 0){
                         if ((yyvsp[-2].int_val) != pas_boolean || (yyvsp[0].int_val) != pas_boolean){
@@ -1928,11 +1927,11 @@ yyreduce:
                      
                      geraCodigo(NULL, (yyvsp[-1].str));
                   }
-#line 1932 "compilador.tab.c"
+#line 1931 "compilador.tab.c"
     break;
 
   case 90: /* simple_expression: plus_minus_empty term  */
-#line 563 "compilador.y"
+#line 562 "compilador.y"
                                          {
                      if ( strcmp((yyvsp[-1].str), "VAZIO") != 0){
                         if ((yyvsp[0].int_val) != pas_integer){
@@ -1947,47 +1946,47 @@ yyreduce:
                      if ( strcmp((yyvsp[-1].str), "MENOS") == 0 )
                         geraCodigo(NULL, "INVR");
                   }
-#line 1951 "compilador.tab.c"
+#line 1950 "compilador.tab.c"
     break;
 
   case 91: /* plus_minus_empty: MAIS  */
-#line 579 "compilador.y"
+#line 578 "compilador.y"
                           { (yyval.str) = "MAIS"; }
-#line 1957 "compilador.tab.c"
+#line 1956 "compilador.tab.c"
     break;
 
   case 92: /* plus_minus_empty: MENOS  */
-#line 580 "compilador.y"
+#line 579 "compilador.y"
                           { (yyval.str) = "MENOS"; }
-#line 1963 "compilador.tab.c"
+#line 1962 "compilador.tab.c"
     break;
 
   case 93: /* plus_minus_empty: %empty  */
-#line 581 "compilador.y"
+#line 580 "compilador.y"
                           { (yyval.str) = "VAZIO"; }
-#line 1969 "compilador.tab.c"
+#line 1968 "compilador.tab.c"
     break;
 
   case 94: /* plus_minus_or: MAIS  */
-#line 584 "compilador.y"
+#line 583 "compilador.y"
                       { (yyval.str) = strdup("SOMA"); }
-#line 1975 "compilador.tab.c"
+#line 1974 "compilador.tab.c"
     break;
 
   case 95: /* plus_minus_or: MENOS  */
-#line 585 "compilador.y"
+#line 584 "compilador.y"
                        { (yyval.str) = strdup("SUBT"); }
-#line 1981 "compilador.tab.c"
+#line 1980 "compilador.tab.c"
     break;
 
   case 96: /* plus_minus_or: OR  */
-#line 586 "compilador.y"
+#line 585 "compilador.y"
                     { (yyval.str) = strdup("DISJ"); }
-#line 1987 "compilador.tab.c"
+#line 1986 "compilador.tab.c"
     break;
 
   case 97: /* term: term times_div_and factor  */
-#line 590 "compilador.y"
+#line 589 "compilador.y"
                                  { 
          if (strcmp((yyvsp[-1].str), "CONJ") == 0){
             if ((yyvsp[-2].int_val) != pas_boolean || (yyvsp[0].int_val) != pas_boolean){
@@ -2005,57 +2004,57 @@ yyreduce:
          }
          geraCodigo(NULL, (yyvsp[-1].str));
       }
-#line 2009 "compilador.tab.c"
+#line 2008 "compilador.tab.c"
     break;
 
   case 99: /* times_div_and: VEZES  */
-#line 610 "compilador.y"
+#line 609 "compilador.y"
                        { (yyval.str) = strdup("MULT"); }
-#line 2015 "compilador.tab.c"
+#line 2014 "compilador.tab.c"
     break;
 
   case 100: /* times_div_and: DIV  */
-#line 611 "compilador.y"
+#line 610 "compilador.y"
                      { (yyval.str) = strdup("DIVI"); }
-#line 2021 "compilador.tab.c"
+#line 2020 "compilador.tab.c"
     break;
 
   case 101: /* times_div_and: AND  */
-#line 612 "compilador.y"
+#line 611 "compilador.y"
                      { (yyval.str) = strdup("CONJ"); }
-#line 2027 "compilador.tab.c"
+#line 2026 "compilador.tab.c"
     break;
 
   case 102: /* procedure_ou_nada: procedure  */
-#line 616 "compilador.y"
+#line 615 "compilador.y"
                              {
                         sptr_var_proc = stack_symbols_table_head(&pilha_ident_esquerdo);
                         stack_symbols_table_pop(&pilha_ident_esquerdo);
                      }
-#line 2036 "compilador.tab.c"
+#line 2035 "compilador.tab.c"
     break;
 
   case 103: /* procedure_ou_nada: %empty  */
-#line 620 "compilador.y"
+#line 619 "compilador.y"
                        {
                         sptr = stack_symbols_table_head(&pilha_ident_esquerdo); 
                         stack_symbols_table_pop(&pilha_ident_esquerdo); 
                      }
-#line 2045 "compilador.tab.c"
+#line 2044 "compilador.tab.c"
     break;
 
   case 104: /* $@23: %empty  */
-#line 626 "compilador.y"
+#line 625 "compilador.y"
          {
             sptr = search(&ts, token);
-            stack_symbols_table_push(&pilha_ident_esquerdo, search(&ts, token));
+            stack_push(NULL, 0, &pilha_ident_esquerdo, search(&ts, token));//symbols_table_push
 
          }
-#line 2055 "compilador.tab.c"
+#line 2054 "compilador.tab.c"
     break;
 
   case 105: /* factor: IDENT $@23 procedure_ou_nada  */
-#line 630 "compilador.y"
+#line 629 "compilador.y"
                              { 
 
          if(!sptr){
@@ -2114,21 +2113,21 @@ yyreduce:
          if(!flag)
             geraCodigo(NULL, mepa_buf);
       }
-#line 2118 "compilador.tab.c"
+#line 2117 "compilador.tab.c"
     break;
 
   case 106: /* factor: NUMERO  */
-#line 688 "compilador.y"
+#line 687 "compilador.y"
                {
          (yyval.int_val) = pas_integer;
          sprintf (mepa_buf, "CRCT %d", atoi(token));
          geraCodigo(NULL, mepa_buf);
       }
-#line 2128 "compilador.tab.c"
+#line 2127 "compilador.tab.c"
     break;
 
   case 107: /* factor: VALOR_BOOL  */
-#line 693 "compilador.y"
+#line 692 "compilador.y"
                    {
          (yyval.int_val) = pas_boolean;
          if(strcmp(token, "True") == 0)
@@ -2137,17 +2136,17 @@ yyreduce:
             sprintf (mepa_buf, "CRCT %d", 0);
          geraCodigo(NULL, mepa_buf);
       }
-#line 2141 "compilador.tab.c"
+#line 2140 "compilador.tab.c"
     break;
 
   case 108: /* factor: ABRE_PARENTESES expression FECHA_PARENTESES  */
-#line 701 "compilador.y"
+#line 700 "compilador.y"
                                                     { (yyval.int_val) = (yyvsp[-1].int_val); }
-#line 2147 "compilador.tab.c"
+#line 2146 "compilador.tab.c"
     break;
 
   case 109: /* factor: NOT factor  */
-#line 702 "compilador.y"
+#line 701 "compilador.y"
                    {
          if ((yyvsp[0].int_val) != pas_boolean){
             fprintf(stderr, "COMPILATION ERROR!!! Boolean operation with non-boolean value!\n");
@@ -2156,11 +2155,11 @@ yyreduce:
          (yyval.int_val) = pas_boolean;
          geraCodigo(NULL, "NEGA");
        }
-#line 2160 "compilador.tab.c"
+#line 2159 "compilador.tab.c"
     break;
 
 
-#line 2164 "compilador.tab.c"
+#line 2163 "compilador.tab.c"
 
       default: break;
     }
@@ -2353,7 +2352,7 @@ yyreturnlab:
   return yyresult;
 }
 
-#line 718 "compilador.y"
+#line 717 "compilador.y"
 
 
 int main (int argc, char** argv) {

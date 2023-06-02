@@ -95,7 +95,7 @@ block       :
               {
                sprintf(mepa_buf, "DSVS R%02d", rot_num);
                geraCodigo(NULL, mepa_buf);
-               stack_int_push(&pilha_labels, rot_num);
+               stack_push(&pilha_labels, rot_num, NULL, NULL); // stack_int_push
                rot_num++;
                level_lex++;
                nr_procs_for_curr_proc = 0;
@@ -104,7 +104,7 @@ block       :
               parte_declara_subrotinas
 
               {
-               stack_int_push(&pilha_procs, nr_procs_for_curr_proc);
+               stack_push(&pilha_procs, nr_procs_for_curr_proc, NULL, NULL); // stack_int_push
                level_lex--;
 
                sprintf(rot_str, "R%02d", stack_int_head(&pilha_labels));
@@ -126,9 +126,9 @@ block       :
 parte_declara_vars: { num_vars = 0; } VAR declara_vars { 
                sprintf(mepa_buf, "AMEM %d", num_vars);
                geraCodigo(NULL, mepa_buf);
-               stack_int_push(&pilha_amem, num_vars);
+               stack_push(&pilha_amem, num_vars, NULL, NULL); // stack_int_push
                }
-            | {stack_int_push(&pilha_amem, 0);}
+            | {stack_push(&pilha_amem, 0, NULL, NULL);} // stack_int_push
 ;
 
 // ========== REGRA 09 ========== //
@@ -213,7 +213,7 @@ declara_proc: PROCEDURE
                   push(&ts, list_symbols[i]);
                }
                rot_num++; // para o desvio de procedures dentro dessa procedure
-               stack_int_push(&pilha_amem, num_params);
+               stack_push(&pilha_amem, num_params, NULL, NULL); // stack_int_push
 
                // dentro_proc = 1;
               }
@@ -267,7 +267,7 @@ declara_func: FUNCTION
                   push(&ts, list_symbols[i]);
                }
                rot_num++; // para o desvio de procedures dentro dessa procedure
-               stack_int_push(&pilha_amem, num_params);
+               stack_push(&pilha_amem, num_params, NULL, NULL); // stack_int_push
 
                // dentro_proc = 1;
               }
@@ -358,8 +358,7 @@ atribuicao_proc:  IDENT
                   { 
                      // printf("Buscando o token %s\n", token);
                      sptr_var_proc = search(&ts, token); 
-                     // printf("Variavel %s tem offset %d\n", sptr_var_proc->id, sptr_var_proc->content.var.offset);
-                     stack_symbols_table_push(&pilha_ident_esquerdo, sptr_var_proc);
+                     stack_push(NULL, 0, &pilha_ident_esquerdo, sptr_var_proc); // symbols_table_push
                   } 
                   a_continua
                   { 
@@ -447,7 +446,7 @@ procedure_sem_parameter:
 
 // ========== REGRA 23 ========== //
 comando_repetitivo:  WHILE {
-                        stack_int_push(&pilha_labels, rot_num);
+                        stack_push(&pilha_labels, rot_num, NULL, NULL); // stack_int_push
                          
                         sprintf(rot_str, "R%02d", rot_num);
                         geraCodigo(rot_str, "NADA");
@@ -481,8 +480,8 @@ comando_condicional: IF expression {
 
                         sprintf(mepa_buf, "DSVF R%02d", rot_num+1);
                         geraCodigo(NULL, mepa_buf); // falta testar expressão
-
-                        stack_int_push(&pilha_labels, rot_num);
+                        
+                        stack_push(&pilha_labels, rot_num, NULL, NULL);// stack_int_push
                         rot_num += 2;
                      }  
                      THEN
@@ -625,7 +624,7 @@ procedure_ou_nada: procedure {
 factor : IDENT 
          {
             sptr = search(&ts, token);
-            stack_symbols_table_push(&pilha_ident_esquerdo, search(&ts, token));
+            stack_push(NULL, 0, &pilha_ident_esquerdo, search(&ts, token));//symbols_table_push
 
          } procedure_ou_nada { 
 
