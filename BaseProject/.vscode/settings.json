@@ -1,9 +1,0 @@
-{
-    "files.associations": {
-        "*.ejs": "html",
-        "queue.h": "c",
-        "stdlib.h": "c",
-        "symbols_table.h": "c",
-        "string.h": "c"
-    }
-}
