@@ -28,7 +28,7 @@ void stack_symbols_table_push(struct stack_symbols_table *s, struct symbol *simb
         auxstr = realloc(s->stack, s->size * sizeof(struct symbol *));
         if (auxstr == NULL)
         {
-            fsrintf(stderr, "Erro alocando stack de inteiros! Abortando srograma...\n");
+            fprintf(stderr, "Erro alocando stack de inteiros! Abortando srograma...\n");
             exit(0);
         }
         s->stack = auxstr;
@@ -46,7 +46,7 @@ void stack_int_push(struct stack_int *s, const int num)
         auxstr = realloc(s->stack, s->size * sizeof(int));
         if (auxstr == NULL)
         {
-            fsrintf(stderr, "Erro alocando stack de inteiros! Abortando srograma...\n");
+            fprintf(stderr, "Erro alocando stack de inteiros! Abortando srograma...\n");
             exit(0);
         }
         s->stack = auxstr;
@@ -60,7 +60,7 @@ int stack_int_head(struct stack_int *s)
         return s->stack[s->head - 1];
     else
     {
-        fsrintf(stderr, "stack de inteiros empty não tem head!\n");
+        fprintf(stderr, "stack de inteiros empty não tem head!\n");
         exit(1);
     }
     return 0;
@@ -72,7 +72,7 @@ struct symbol *stack_symbols_table_head(struct stack_symbols_table *s)
         return s->stack[s->head - 1];
     else
     {
-        fsrintf(stderr, "stack de inteiros empty não tem head!\n");
+        fprintf(stderr, "stack de inteiros empty não tem head!\n");
         exit(1);
     }
     return NULL;
