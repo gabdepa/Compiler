@@ -30,11 +30,13 @@ struct parameter list_parameters[128];
 struct content ti;
 
 
-int str2type(const char *str){
-   if (!strcmp(str, "integer")) return pas_integer;
-   if (!strcmp(str, "boolean")) return pas_boolean;
+int str2type(const char *str)
+{
+   if ( !strcmp(str, "integer") ) return pas_integer;
+   if ( !strcmp(str, "boolean") ) return pas_boolean;
    return undefined_type;
 }
+
 short int rot_num;
 char rot_str[4];
 int rot_w;
@@ -54,13 +56,13 @@ int rot_w;
 %token MAIOR_IGUAL VALOR_BOOL TIPO READ WRITE
 
 %union{
-   char * str;  // define o type str
-   int int_val; // define o type int_val
-   struct symbol *simb;
+   char * str;  // Define the type str
+   int int_val; // Define the type int_val
+   struct symbol *symb;
 }
 
-%type <str> plus_minus_or; // numa expressão
-%type <str> plus_minus_empty; // antes de um factor
+%type <str> plus_minus_or; // In a expression
+%type <str> plus_minus_empty; // Before a factor
 %type <str> times_div_and;
 %type <str> relation;
 %type <int_val> expression;
