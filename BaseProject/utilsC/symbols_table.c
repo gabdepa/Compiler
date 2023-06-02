@@ -66,13 +66,11 @@ struct symbol *search(struct symbol_table **ts, const char *name)
 
 void set_type(struct symbol_table **ts, int category, int type, int quantity)
 {
-    int i = (*ts)->quantity - 1;
     for (int i = 0; i < quantity; ++i)
     {
-        (*ts)->symbols[i - i].content.var.type = type;
-        /* acredito que isso atribua tanto pra variavel quanto
-        quanto para parametros, por causa da forma que a union
-        funciona, se quiser um jeito sem esse xunxo você faria
-        um if com a category */
+        if ((*ts)->symbols[i].category == category)
+        {
+            (*ts)->symbols[i].content.var.type = type;
+        }
     }
 }

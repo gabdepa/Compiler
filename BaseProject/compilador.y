@@ -716,35 +716,35 @@ factor : IDENT
 
 %%
 
-int main (int argc, char** argv) {
+int main (int argc, char** argv) 
+{
    FILE* fp;
    extern FILE* yyin;
 
-   if (argc<2 || argc>2) {
-         printf("usage compilador <arq>a %d\n", argc);
+   if ( argc<2 || argc>2 )
+   {
+         printf("ERROR: Compiler usage: ./compilador <testFile>.pas, you've passed %d argument, but we need one test file\n", argc);
          return(-1);
-      }
+   }
 
    fp=fopen (argv[1], "r");
-   if (fp == NULL) {
-      printf("usage compilador <arq>b\n");
+   if ( fp == NULL ) 
+   {
+      printf("ERROR: File %s passed is NULL.\n", argv[1]);
       return(-1);
    }
 
-
-/* -------------------------------------------------------------------
- *  Inicia a Tabela de S�mbolos
- * ------------------------------------------------------------------- */
+   /* Initialize Tables */
    table_init(&ts);
    table_init(&pilha_atribuicao);
    stack_init(&pilha_labels, NULL);
    stack_init(&pilha_amem, NULL);
-   stack_init(&pilha_procs, NULL);
-   stack_init(NULL, &pilha_ident_esquerdo);
+   stack_init(&pilha_procs, &pilha_ident_esquerdo);
 
    yyin=fp;
    yyparse();
 
+   /* Destruct Tables */
    stack_destruct(&pilha_labels, NULL);
    stack_destruct(&pilha_amem, NULL);
    stack_destruct(&pilha_procs, NULL);

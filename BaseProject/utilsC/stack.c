@@ -29,8 +29,8 @@ void stack_init(struct stack_int *si, struct stack_symbols_table *sst)
     }
     else
     {
-        fprintf(stderr, "Both pointers are NULL, exiting...\n");
-        exit(0);
+        fprintf(stderr, "ERROR: stack.c|stack_init()-> Both pointers are NULL, exiting with error code!\n");
+        exit(-1);
     }
 }
 
@@ -40,8 +40,8 @@ void stack_push(struct stack_int *si, const int num, struct stack_symbols_table 
     {
         if (!symbol)
         {
-            fprintf(stderr, "Pointer symbol is NULL, exiting...\n");
-            exit(0);
+            fprintf(stderr, "ERROR: stack.c|stack_push()-> Pointer symbol is NULL, exiting with error code!\n");
+            exit(-1);
         }
         if (sst->head == sst->size)
         {
@@ -50,8 +50,8 @@ void stack_push(struct stack_int *si, const int num, struct stack_symbols_table 
             auxstr = realloc(sst->stack, sst->size * sizeof(struct symbol *));
             if (auxstr == NULL)
             {
-                fprintf(stderr, "Erro alocando stack de inteiros! Abortando srograma...\n");
-                exit(0);
+                fprintf(stderr, "ERROR: stack.c|stack_push()-> Could not reallocate stack of symbols, exiting with error code!\n");
+                exit(-1);
             }
             sst->stack = auxstr;
         }
@@ -66,8 +66,8 @@ void stack_push(struct stack_int *si, const int num, struct stack_symbols_table 
             auxstr = realloc(si->stack, si->size * sizeof(int));
             if (auxstr == NULL)
             {
-                fprintf(stderr, "Erro alocando stack de inteiros! Abortando srograma...\n");
-                exit(0);
+                fprintf(stderr, "ERROR: stack.c|stack_push()-> Could not reallocate stack of integers, exiting with error code!\n");
+                exit(-1);
             }
             si->stack = auxstr;
         }
@@ -75,33 +75,9 @@ void stack_push(struct stack_int *si, const int num, struct stack_symbols_table 
     }
     else
     {
-        fprintf(stderr, "Both Pointers passed are valid, exiting...\n");
-        exit(0);
+        fprintf(stderr, "ERROR: stack.c|stack_push()-> Both Pointers passed are valid, exiting with error code!\n");
+        exit(-1);
     }
-}
-
-int stack_int_head(struct stack_int *s)
-{
-    if (s->head > 0)
-        return s->stack[s->head - 1];
-    else
-    {
-        fprintf(stderr, "stack de inteiros empty não tem head!\n");
-        exit(1);
-    }
-    return 0;
-}
-
-struct symbol *stack_symbols_table_head(struct stack_symbols_table *s)
-{
-    if (s->size > 0)
-        return s->stack[s->head - 1];
-    else
-    {
-        fprintf(stderr, "stack de inteiros empty não tem head!\n");
-        exit(1);
-    }
-    return NULL;
 }
 
 int stack_empty(struct stack_int *si, struct stack_symbols_table *sst)
@@ -142,4 +118,28 @@ void stack_destruct(struct stack_int *si, struct stack_symbols_table *sst)
         sst->size = 0;
         free(sst->stack);
     }
+}
+
+int stack_int_head(struct stack_int *s)
+{
+    if (s->head > 0)
+        return s->stack[s->head - 1];
+    else
+    {
+        fprintf(stderr, "ERROR: stack.c|stack_int_head()-> Integers stack is empty, exiting with error code!\n");
+        exit(-1);
+    }
+    return 0;
+}
+
+struct symbol *stack_symbols_table_head(struct stack_symbols_table *s)
+{
+    if (s->size > 0)
+        return s->stack[s->head - 1];
+    else
+    {
+        fprintf(stderr, "ERROR: stack.c|stack_int_head()-> Symbols stack is empty, exiting with error code!\n");
+        exit(-1);
+    }
+    return NULL;
 }

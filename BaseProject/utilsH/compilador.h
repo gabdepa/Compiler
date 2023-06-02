@@ -1,6 +1,6 @@
 #define TAM_TOKEN 45
 
-typedef enum simbolos
+typedef enum symbols
 {
   simb_program,
   simb_label,
@@ -48,21 +48,17 @@ typedef enum simbolos
   simb_tipo,
   simb_read,
   simb_write
-} simbolos;
+} symbols;
 
-/* -------------------------------------------------------------------
- * variáveis globais
- * ------------------------------------------------------------------- */
+/* GLOBAL VARIABLES */
 
-extern simbolos simbolo, relacao;
+extern symbols simbolo, relacao;
 extern char token[TAM_TOKEN];
 extern int nivel_lexico;
 extern int desloc;
 extern int nl;
 
-/* -------------------------------------------------------------------
- * prototipos globais
- * ------------------------------------------------------------------- */
+/* GLOBAL PROTOTYPES */
 
 void geraCodigo(char *, char *);
 int yylex();

@@ -60,14 +60,14 @@ struct symbol
     } content;
 };
 
-struct symbol symbol_init(char *id, int cat, int level, struct content content);
-
 struct symbol_table
 {
     struct symbol *symbols;
     unsigned int quantity;
     unsigned int size;
 };
+
+struct symbol symbol_init(char *id, int cat, int level, struct content content);
 
 void table_init(struct symbol_table **ts);
 

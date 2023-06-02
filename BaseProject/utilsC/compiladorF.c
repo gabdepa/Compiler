@@ -3,24 +3,32 @@
 #include <string.h>
 #include "../utilsH/compilador.h"
 
-simbolos simbolo, relacao;
+symbols simbolo, relacao;
 char token[TAM_TOKEN];
-FILE* fp=NULL;
+FILE *fp = NULL;
 
-void geraCodigo (char* rot, char* comando) {
+void geraCodigo(char *rot, char *comando)
+{
 
-  if (fp == NULL) {
-    fp = fopen ("MEPA", "w");
+  if (fp == NULL)
+  {
+    fp = fopen("MEPA", "w");
   }
 
-  if ( rot == NULL ) {
-    fprintf(fp, "     %s\n", comando); fflush(fp);
-  } else {
-    fprintf(fp, "%s: %s \n", rot, comando); fflush(fp);
+  if (rot == NULL)
+  {
+    fprintf(fp, "     %s\n", comando);
+    fflush(fp);
+  }
+  else
+  {
+    fprintf(fp, "%s: %s \n", rot, comando);
+    fflush(fp);
   }
 }
 
-int imprimeErro ( char* erro ) {
-  fprintf (stderr, "Erro na linha %d - %s\n", nl, erro);
+int imprimeErro(char *erro)
+{
+  fprintf(stderr, "Erro na linha %d - %s\n", nl, erro);
   exit(-1);
 }
