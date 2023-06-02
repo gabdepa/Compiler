@@ -19,7 +19,7 @@ stack.o: utilsC/stack.c utilsH/stack.h
 	gcc -c utilsC/stack.c -o stack.o
 
 clean:
-	rm -f compilador.tab.* lex.yy.c compilador.o compilador
+	rm -f compilador.tab.* lex.yy.c compilador.o compilador symbols_table.o stack.o
 
 purge: clean
 	
