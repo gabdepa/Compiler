@@ -26,16 +26,10 @@ int stack_int_head(struct stack_int *s);
 
 struct symbol *stack_symbols_table_head(struct stack_symbols_table *s);
 
-int stack_int_empty(struct stack_int *s);
+int stack_empty(struct stack_int *si, struct stack_symbols_table *sst);
 
-int stack_symbols_table_empty(struct stack_symbols_table *s);
+void stack_pop(struct stack_int *si, struct stack_symbols_table *sst);
 
-void stack_int_pop(struct stack_int *s);
-
-void stack_symbols_table_pop(struct stack_symbols_table *s);
-
-void stack_int_destruct(struct stack_int *s);
-
-void stack_symbols_table_destruct(struct stack_symbols_table *s);
+void stack_destruct(struct stack_int *si, struct stack_symbols_table *sst);
 
 #endif

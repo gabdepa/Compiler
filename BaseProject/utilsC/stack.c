@@ -104,36 +104,42 @@ struct symbol *stack_symbols_table_head(struct stack_symbols_table *s)
     return NULL;
 }
 
-int stack_int_empty(struct stack_int *s)
+int stack_empty(struct stack_int *si, struct stack_symbols_table *sst)
 {
-    return s->head == 0;
+    if (si && !sst)
+    {
+        return si->head == 0;
+    }
+    else if (!si && sst)
+    {
+        return sst->head == 0;
+    }
 }
 
-int stack_symbols_table_empty(struct stack_symbols_table *s)
+void stack_pop(struct stack_int *si, struct stack_symbols_table *sst)
 {
-    return s->head == 0;
+    if (si && !sst)
+    {
+        si->head--;
+    }
+    else if (!si && sst)
+    {
+        sst->head--;
+    }
 }
 
-void stack_int_pop(struct stack_int *s)
+void stack_destruct(struct stack_int *si, struct stack_symbols_table *sst)
 {
-    s->head--;
-}
-
-void stack_symbols_table_pop(struct stack_symbols_table *s)
-{
-    s->head--;
-}
-
-void stack_int_destruct(struct stack_int *s)
-{
-    s->head = 0;
-    s->size = 0;
-    free(s->stack);
-}
-
-void stack_symbols_table_destruct(struct stack_symbols_table *s)
-{
-    s->head = 0;
-    s->size = 0;
-    free(s->stack);
+    if (si && !sst)
+    {
+        si->head = 0;
+        si->size = 0;
+        free(si->stack);
+    }
+    else if (!si && sst)
+    {
+        sst->head = 0;
+        sst->size = 0;
+        free(sst->stack);
+    }
 }

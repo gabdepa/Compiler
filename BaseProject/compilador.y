@@ -109,7 +109,7 @@ block       :
 
                sprintf(rot_str, "R%02d", stack_int_head(&pilha_labels));
                geraCodigo(rot_str, "NADA");
-               stack_int_pop(&pilha_labels);
+               stack_pop(&pilha_labels, NULL);// stack_int_pop
               }
               comando_composto
 
@@ -117,7 +117,7 @@ block       :
                sprintf(mepa_buf, "DMEM %d", stack_int_head(&pilha_amem));
                remove_n(&ts, stack_int_head(&pilha_amem));
                geraCodigo(NULL, mepa_buf);
-               stack_int_pop(&pilha_amem);
+               stack_pop(&pilha_amem, NULL);// stack_int_pop
               }
 
               ;
@@ -223,9 +223,9 @@ declara_proc: PROCEDURE
               {
                remove_n(&ts, stack_int_head(&pilha_amem));
                sprintf(mepa_buf, "RTPR %d, %d", level_lex, stack_int_head(&pilha_amem));
-               stack_int_pop(&pilha_amem);
+               stack_pop(&pilha_amem, NULL);// stack_int_pop
                remove_n(&ts, stack_int_head(&pilha_procs));
-               stack_int_pop(&pilha_procs);
+               stack_pop(&pilha_procs, NULL);// stack_int_pop
                geraCodigo(NULL, mepa_buf);
               }
               PONTO_E_VIRGULA
@@ -277,10 +277,10 @@ declara_func: FUNCTION
               {
                remove_n(&ts, stack_int_head(&pilha_amem));
                sprintf(mepa_buf, "RTPR %d, %d", level_lex, stack_int_head(&pilha_amem));
-               stack_int_pop(&pilha_amem);
+               stack_pop(&pilha_amem, NULL);// stack_int_pop
 
                remove_n(&ts, stack_int_head(&pilha_procs));
-               stack_int_pop(&pilha_procs);
+               stack_pop(&pilha_procs, NULL);// stack_int_pop
                geraCodigo(NULL, mepa_buf);
               }
               PONTO_E_VIRGULA
@@ -362,7 +362,7 @@ atribuicao_proc:  IDENT
                   } 
                   a_continua
                   { 
-                     stack_symbols_table_pop(&pilha_ident_esquerdo);
+                     stack_pop(NULL, &pilha_ident_esquerdo);// stack_symbols_table_pop
                   };
 
 a_continua: ATRIBUICAO {atribui = 1;}atribuicao {atribui = 0;}|
@@ -464,7 +464,7 @@ comando_repetitivo:  WHILE {
                         sprintf(rot_str, "R%02d", stack_int_head(&pilha_labels)+1);
                         geraCodigo(rot_str, "NADA");
 
-                        stack_int_pop(&pilha_labels);
+                        stack_pop(&pilha_labels, NULL);// stack_int_pop
                      }
 ;
 
@@ -497,7 +497,7 @@ comando_condicional: IF expression {
                         sprintf(rot_str, "R%02d", stack_int_head(&pilha_labels));
                         geraCodigo(rot_str, "NADA");
 
-                        stack_int_pop(&pilha_labels);
+                        stack_pop(&pilha_labels, NULL);// stack_int_pop
                      }
 ;
 
@@ -614,11 +614,11 @@ times_div_and  : VEZES { $$ = strdup("MULT"); }
 // ========== REGRA 29 ========== //
 procedure_ou_nada: procedure {
                         sptr_var_proc = stack_symbols_table_head(&pilha_ident_esquerdo);
-                        stack_symbols_table_pop(&pilha_ident_esquerdo);
+                        stack_pop(NULL, &pilha_ident_esquerdo);// stack_symbols_table_pop
                      }
                      | {
                         sptr = stack_symbols_table_head(&pilha_ident_esquerdo); 
-                        stack_symbols_table_pop(&pilha_ident_esquerdo); 
+                        stack_pop(NULL, &pilha_ident_esquerdo);// stack_symbols_table_pop
                      };
 
 factor : IDENT 
@@ -745,10 +745,10 @@ int main (int argc, char** argv) {
    yyin=fp;
    yyparse();
 
-   stack_int_destruct(&pilha_labels);
-   stack_int_destruct(&pilha_amem);
-   stack_int_destruct(&pilha_procs);
-   stack_symbols_table_destruct(&pilha_ident_esquerdo);
+   stack_destruct(&pilha_labels, NULL);
+   stack_destruct(&pilha_amem, NULL);
+   stack_destruct(&pilha_procs, NULL);
+   stack_destruct(NULL, &pilha_ident_esquerdo);
 
    return 0;
 }
