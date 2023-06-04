@@ -26,7 +26,7 @@ void push(struct symbol_table **ts, struct symbol s)
 {
     int i;
     (*ts)->quantity++;
-    // se a quantidade de elementos ultrapassa o sizeanho alocado
+    // se a quantidade de elementos ultrapassa o tamanho alocado
     if ((*ts)->quantity > (*ts)->size)
     {
         (*ts)->size <<= 1;

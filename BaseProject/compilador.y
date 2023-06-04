@@ -78,7 +78,7 @@ int rot_w;
 
 // ========== REGRA 01 ========== //
 programa    :{
-             geraCodigo (NULL, "INPP");
+             generateCode (NULL, "INPP");
              level_lex = 0;
              rot_num = 0;
              dentro_chamada_proc = 0;
@@ -86,7 +86,7 @@ programa    :{
              PROGRAM IDENT
              ABRE_PARENTESES id_list FECHA_PARENTESES PONTO_E_VIRGULA
              block PONTO {
-             geraCodigo (NULL, "PARA");
+             generateCode (NULL, "PARA");
              }
 ;
 
@@ -96,7 +96,7 @@ block       :
 
               {
                sprintf(mepa_buf, "DSVS R%02d", rot_num);
-               geraCodigo(NULL, mepa_buf);
+               generateCode(NULL, mepa_buf);
                stack_push(&pilha_labels, rot_num, NULL, NULL); // stack_int_push
                rot_num++;
                level_lex++;
@@ -110,7 +110,7 @@ block       :
                level_lex--;
 
                sprintf(rot_str, "R%02d", stack_int_head(&pilha_labels));
-               geraCodigo(rot_str, "NADA");
+               generateCode(rot_str, "NADA");
                stack_pop(&pilha_labels, NULL);// stack_int_pop
               }
               comando_composto
@@ -118,7 +118,7 @@ block       :
               {
                sprintf(mepa_buf, "DMEM %d", stack_int_head(&pilha_amem));
                remove_n(&ts, stack_int_head(&pilha_amem));
-               geraCodigo(NULL, mepa_buf);
+               generateCode(NULL, mepa_buf);
                stack_pop(&pilha_amem, NULL);// stack_int_pop
               }
 
@@ -127,7 +127,7 @@ block       :
 // ========== REGRA 08 ========== //
 parte_declara_vars: { num_vars = 0; } VAR declara_vars { 
                sprintf(mepa_buf, "AMEM %d", num_vars);
-               geraCodigo(NULL, mepa_buf);
+               generateCode(NULL, mepa_buf);
                stack_push(&pilha_amem, num_vars, NULL, NULL); // stack_int_push
                }
             | {stack_push(&pilha_amem, 0, NULL, NULL);} // stack_int_push
@@ -193,7 +193,7 @@ declara_proc: PROCEDURE
               {
                sprintf(rot_str, "R%02d", rot_num);
                sprintf(mepa_buf, "ENPR %d", level_lex);
-               geraCodigo(rot_str, mepa_buf);
+               generateCode(rot_str, mepa_buf);
                
                ti.proc.label = rot_num;
                ti.proc.parameters_quantity = num_params;
@@ -228,7 +228,7 @@ declara_proc: PROCEDURE
                stack_pop(&pilha_amem, NULL);// stack_int_pop
                remove_n(&ts, stack_int_head(&pilha_procs));
                stack_pop(&pilha_procs, NULL);// stack_int_pop
-               geraCodigo(NULL, mepa_buf);
+               generateCode(NULL, mepa_buf);
               }
               PONTO_E_VIRGULA
 ;
@@ -248,7 +248,7 @@ declara_func: FUNCTION
               {
                sprintf(rot_str, "R%02d", rot_num);
                sprintf(mepa_buf, "ENPR %d", level_lex);
-               geraCodigo(rot_str, mepa_buf);
+               generateCode(rot_str, mepa_buf);
                
                ti.proc.label = rot_num;
                ti.proc.parameters_quantity = num_params;
@@ -283,7 +283,7 @@ declara_func: FUNCTION
 
                remove_n(&ts, stack_int_head(&pilha_procs));
                stack_pop(&pilha_procs, NULL);// stack_int_pop
-               geraCodigo(NULL, mepa_buf);
+               generateCode(NULL, mepa_buf);
               }
               PONTO_E_VIRGULA
 ;
@@ -339,21 +339,21 @@ leitura_itens: leitura_itens VIRGULA item_leitura | item_leitura
 
 item_leitura: IDENT
                {
-                  geraCodigo(NULL, "LEIT");
+                  generateCode(NULL, "LEIT");
                   sptr = search(&ts, token);
                   if(!sptr || sptr->category == procedure){
                      fprintf(stderr, "COMPILATION ERROR!!!\n Wrong use of read()\n"); 
                      exit(1);
                   }
                   sprintf(mepa_buf, "ARMZ %d, %d", sptr->level, sptr->content.var.offset);
-                  geraCodigo(NULL, mepa_buf);
+                  generateCode(NULL, mepa_buf);
                }
 
 ;
 
 escrita : WRITE ABRE_PARENTESES escreve_itens FECHA_PARENTESES;
 
-escreve_itens: escreve_itens VIRGULA expression {geraCodigo(NULL, "IMPR");}| expression {geraCodigo(NULL, "IMPR");};
+escreve_itens: escreve_itens VIRGULA expression {generateCode(NULL, "IMPR");}| expression {generateCode(NULL, "IMPR");};
 ;
 
 atribuicao_proc:  IDENT 
@@ -395,7 +395,7 @@ atribuicao: expression {
       fprintf(stderr, "Procedimento tratado como variável!\n");
       exit(1);
    }
-   geraCodigo(NULL, mepa_buf);
+   generateCode(NULL, mepa_buf);
 }
 ;
 
@@ -414,7 +414,7 @@ procedure:
             //   printf("fun: %d\n", function);
             //   printf("proc: %d\n", procedure);
               if(curr_proc.category == function ){
-                  geraCodigo(NULL, "AMEM 1");
+                  generateCode(NULL, "AMEM 1");
               }
               sprintf(proc_name, "CHPR R%02d, %d", sptr_var_proc->content.proc.label, level_lex);
              } 
@@ -431,7 +431,7 @@ procedure:
                    fprintf(stderr, "COMPILATION ERROR!!!\n Wrong number of parameters.\n"); 
                    exit(1);
                }
-               geraCodigo(NULL, proc_name);
+               generateCode(NULL, proc_name);
              }
 ;
 
@@ -443,7 +443,7 @@ procedure_sem_parameter:
                   exit(1);
                }
                sprintf(mepa_buf, "CHPR R%02d, %d", sptr_var_proc->content.proc.label, level_lex);
-               geraCodigo(NULL, mepa_buf);
+               generateCode(NULL, mepa_buf);
               }
 
 // ========== REGRA 23 ========== //
@@ -451,20 +451,20 @@ comando_repetitivo:  WHILE {
                         stack_push(&pilha_labels, rot_num, NULL, NULL); // stack_int_push
                          
                         sprintf(rot_str, "R%02d", rot_num);
-                        geraCodigo(rot_str, "NADA");
+                        generateCode(rot_str, "NADA");
                         rot_num += 2;
                      }
                      expression {
                         sprintf(mepa_buf, "DSVF R%02d", stack_int_head(&pilha_labels)+1);
-                        geraCodigo(NULL, mepa_buf); // falta testar expressão
+                        generateCode(NULL, mepa_buf); // falta testar expressão
                      }
                      DO 
                      comando_sem_label_ou_composto {
                         sprintf(mepa_buf, "DSVS R%02d", stack_int_head(&pilha_labels));
-                        geraCodigo(NULL, mepa_buf);
+                        generateCode(NULL, mepa_buf);
 
                         sprintf(rot_str, "R%02d", stack_int_head(&pilha_labels)+1);
-                        geraCodigo(rot_str, "NADA");
+                        generateCode(rot_str, "NADA");
 
                         stack_pop(&pilha_labels, NULL);// stack_int_pop
                      }
@@ -481,7 +481,7 @@ comando_condicional: IF expression {
                         }
 
                         sprintf(mepa_buf, "DSVF R%02d", rot_num+1);
-                        geraCodigo(NULL, mepa_buf); // falta testar expressão
+                        generateCode(NULL, mepa_buf); // falta testar expressão
                         
                         stack_push(&pilha_labels, rot_num, NULL, NULL);// stack_int_push
                         rot_num += 2;
@@ -489,15 +489,15 @@ comando_condicional: IF expression {
                      THEN
                      comando_sem_label_ou_composto {
                         sprintf(mepa_buf, "DSVS R%02d", stack_int_head(&pilha_labels));
-                        geraCodigo(NULL, mepa_buf);
+                        generateCode(NULL, mepa_buf);
 
                         sprintf(rot_str, "R%02d", stack_int_head(&pilha_labels)+1);
-                        geraCodigo(rot_str, "NADA");
+                        generateCode(rot_str, "NADA");
 
                      } 
                      else_ou_nada{
                         sprintf(rot_str, "R%02d", stack_int_head(&pilha_labels));
-                        geraCodigo(rot_str, "NADA");
+                        generateCode(rot_str, "NADA");
 
                         stack_pop(&pilha_labels, NULL);// stack_int_pop
                      }
@@ -528,7 +528,7 @@ expression   : simple_expression { $$ = $1; }
                   fprintf(stderr, "COMPILATION ERROR!!!\nCannot compare expressions with different types!\n");
                   exit(1);
                }
-               geraCodigo(NULL, $2);
+               generateCode(NULL, $2);
                $$ = pas_boolean;
             }
 ;
@@ -559,7 +559,7 @@ simple_expression : simple_expression plus_minus_or term {
                         $$ = pas_integer;
                      }
                      
-                     geraCodigo(NULL, $2);
+                     generateCode(NULL, $2);
                   }
                   | plus_minus_empty term{
                      if ( strcmp($1, "VAZIO") != 0){
@@ -573,7 +573,7 @@ simple_expression : simple_expression plus_minus_or term {
                      }
                      
                      if ( strcmp($1, "MENOS") == 0 )
-                        geraCodigo(NULL, "INVR");
+                        generateCode(NULL, "INVR");
                   } 
 ;
 
@@ -603,7 +603,7 @@ term : term times_div_and factor {
             }
             $$ = pas_integer;
          }
-         geraCodigo(NULL, $2);
+         generateCode(NULL, $2);
       }
       | factor
 ;
@@ -684,12 +684,12 @@ factor : IDENT
             flag = 1;
          }
          if(!flag)
-            geraCodigo(NULL, mepa_buf);
+            generateCode(NULL, mepa_buf);
       } 
       | NUMERO {
          $$ = pas_integer;
          sprintf (mepa_buf, "CRCT %d", atoi(token));
-         geraCodigo(NULL, mepa_buf);
+         generateCode(NULL, mepa_buf);
       }
       | VALOR_BOOL {
          $$ = pas_boolean;
@@ -697,7 +697,7 @@ factor : IDENT
             sprintf (mepa_buf, "CRCT %d", 1);
          else
             sprintf (mepa_buf, "CRCT %d", 0);
-         geraCodigo(NULL, mepa_buf);
+         generateCode(NULL, mepa_buf);
       }
       | ABRE_PARENTESES expression FECHA_PARENTESES { $$ = $2; }
       | NOT factor {
@@ -706,7 +706,7 @@ factor : IDENT
             exit(1);
          }
          $$ = pas_boolean;
-         geraCodigo(NULL, "NEGA");
+         generateCode(NULL, "NEGA");
        }
          /* falta chamada de função */
       /* | IDENT procedure {$$ = sptr_var_proc->content.var.type;} */

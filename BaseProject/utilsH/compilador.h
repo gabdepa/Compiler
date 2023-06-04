@@ -60,6 +60,6 @@ extern int nl;
 
 /* GLOBAL PROTOTYPES */
 
-void geraCodigo(char *, char *);
+void generateCode(char *, char *);
 int yylex();
 void yyerror(const char *s);

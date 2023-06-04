@@ -7,7 +7,7 @@ symbols simbolo, relacao;
 char token[TAM_TOKEN];
 FILE *fp = NULL;
 
-void geraCodigo(char *rot, char *comando)
+void generateCode(char *rot, char *comando)
 {
 
   if (fp == NULL)
@@ -27,7 +27,7 @@ void geraCodigo(char *rot, char *comando)
   }
 }
 
-int imprimeErro(char *erro)
+int printError(char *erro)
 {
   fprintf(stderr, "Erro na linha %d - %s\n", nl, erro);
   exit(-1);
