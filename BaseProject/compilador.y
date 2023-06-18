@@ -1,42 +1,49 @@
+
+// Testar se funciona corretamente o empilhamento de par�metros
+// passados por valor ou por refer�ncia.
+
+// Ainda precisa de suporte para booleanos
+
+
 %{
 #include <stdio.h>
 #include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
-#include "./utilsH/compilador.h"
-#include "./utilsH/symbols_table.h"
-#include "./utilsH/stack.h"
+#include "compilador.h"
+#include "utils/tabela_simb/tabela_simb.h"
+#include "utils/tabela_simb/simbolo.h"
+#include "utils/pilha/pilha_int.h"
+#include "utils/pilha/pilha_simb_ptr.h"
 
 int num_vars;
-int num_params; // número de parâmetros do procedure atual
+int num_params; // número de parâmetros do procedimento atual
 int curr_section_params; // número de parâmetros da seção atual => seção é aquela separada por ';'
 int curr_call_params;
-int level_lex;
+int nivel_lex;
 int pos_var;
-int qt_type_atual;
+int qt_tipo_atual;
 int referencia; // indica se a seção atual é por referência, se não for, é por cópia
-//int dentro_proc; /* indica se estamos dentro de um procedure, mas acho que não precisa por conta da forma das structs
+//int dentro_proc; /* indica se estamos dentro de um procedimento, mas acho que não precisa por conta da forma das structs
 //                     usada na linha ~470 */
-int dentro_chamada_proc; // indica se está dentro de uma chamada de procedure
+int dentro_chamada_proc; // indica se está dentro de uma chamada de procedimento
 int nr_procs_for_curr_proc;
 int atribui;
 
 char mepa_buf[128], proc_name[128], idents[128][128];
-struct symbol_table *ts, *pilha_atribuicao;
-struct symbol s, *sptr, *sptr_var_proc, *sptr_chamada_proc, *sptr_atribuicao, curr_proc, list_symbols[128];
-struct stack_int pilha_labels, pilha_amem, pilha_procs;
-struct stack_symbols_table pilha_ident_esquerdo;
-struct parameter list_parameters[128];
-struct content ti;
+struct tabela_de_simbolos *ts, *pilha_atribuicao;
+struct simbolo s, *sptr, *sptr_var_proc, *sptr_chamada_proc, *sptr_atribuicao, curr_proc, lista_simbolos[128];
+struct pilha_int pilha_rotulos, pilha_amem, pilha_procs;
+struct pilha_simb_ptr pilha_ident_esquerdo;
+struct parametro lista_parametros[128];
+struct cat_conteudo ti;
 
 
-int str2type(const char *str)
-{
-   if ( !strcmp(str, "integer") ) return pas_integer;
-   if ( !strcmp(str, "boolean") ) return pas_boolean;
+int str2type(const char *str){
+   if (!strcmp(str, "integer")) return pas_integer;
+   if (!strcmp(str, "boolean")) return pas_boolean;
    return undefined_type;
 }
-
 short int rot_num;
 char rot_str[4];
 int rot_w;
@@ -56,100 +63,137 @@ int rot_w;
 %token MAIOR_IGUAL VALOR_BOOL TIPO READ WRITE
 
 %union{
-   char * str;  // Define the type str
-   int int_val; // Define the type int_val
-   struct symbol *symb;
+   char * str;  // define o tipo str
+   int int_val; // define o tipo int_val
+   struct simbolo *simb;
 }
 
-%type <str> plus_minus_or; // In a expression
-%type <str> plus_minus_empty; // Before a factor
-%type <str> times_div_and;
-%type <str> relation;
-%type <int_val> expression;
-%type <int_val> simple_expression;
-%type <int_val> factor;
-%type <int_val> term;
-%type <int_val> type;
+/* %type <simb> variavel; // atribui o tipo str a regra variavel */
+%type <str> mais_menos_or; // numa expressão
+%type <str> mais_menos_vazio; // antes de um fator
+%type <str> vezes_div_and;
+%type <str> relacao;
+%type <int_val> expressao;
+%type <int_val> expressao_simples;
+%type <int_val> fator;
+%type <int_val> termo;
+%type <int_val> tipo;
 
-%nonassoc "lower_then_else"
+%nonassoc LOWER_THEN_ELSE
 %nonassoc ELSE
 
 %%
 
-// ========== REGRA 01 ========== //
+// ========== 
+/* <programa> ::=
+   REGRA 01
+   program <identificador> (<lista de identificadores>);      
+      <bloco>. */
+/*
+   <program> ::=
+      program <identificador> { <lista de identificadores>};
+         <bloco>
+*/
 programa    :{
-             generateCode (NULL, "INPP");
-             level_lex = 0;
+             geraCodigo (NULL, "INPP");
+             nivel_lex = 0;
              rot_num = 0;
              dentro_chamada_proc = 0;
              }
              PROGRAM IDENT
-             ABRE_PARENTESES id_list FECHA_PARENTESES PONTO_E_VIRGULA
-             block PONTO {
-             generateCode (NULL, "PARA");
+             ABRE_PARENTESES lista_idents FECHA_PARENTESES PONTO_E_VIRGULA
+             bloco PONTO {
+             geraCodigo (NULL, "PARA");
              }
 ;
 
-// ========== REGRA 02 ========== //
-block       :
+/* REGRA 02  
+<bloco> ::=
+    [<parte de declarações de rótulos>] 
+    [<parte de definições de tipos>]
+    [<parte de declarações de variáveis>]
+    [<parte de declarações de sub-rotinas>] 
+    <comando composto> */
+bloco       :
               parte_declara_vars
-
               {
                sprintf(mepa_buf, "DSVS R%02d", rot_num);
-               generateCode(NULL, mepa_buf);
-               stack_push(&pilha_labels, rot_num, NULL, NULL); // stack_int_push
+               geraCodigo(NULL, mepa_buf);
+               pilha_int_empilhar(&pilha_rotulos, rot_num);
                rot_num++;
-               level_lex++;
+
+               nivel_lex++;
                nr_procs_for_curr_proc = 0;
               }
-            
               parte_declara_subrotinas
-
               {
-               stack_push(&pilha_procs, nr_procs_for_curr_proc, NULL, NULL); // stack_int_push
-               level_lex--;
+               pilha_int_empilhar(&pilha_procs, nr_procs_for_curr_proc);
+               nivel_lex--;
 
-               sprintf(rot_str, "R%02d", stack_int_head(&pilha_labels));
-               generateCode(rot_str, "NADA");
-               stack_pop(&pilha_labels, NULL);// stack_int_pop
+               sprintf(rot_str, "R%02d", pilha_int_topo(&pilha_rotulos));
+               geraCodigo(rot_str, "NADA");
+               pilha_int_desempilhar(&pilha_rotulos);
               }
               comando_composto
-
               {
-               sprintf(mepa_buf, "DMEM %d", stack_int_head(&pilha_amem));
-               remove_n(&ts, stack_int_head(&pilha_amem));
-               generateCode(NULL, mepa_buf);
-               stack_pop(&pilha_amem, NULL);// stack_int_pop
+               sprintf(mepa_buf, "DMEM %d", pilha_int_topo(&pilha_amem));
+               remove_n(&ts, pilha_int_topo(&pilha_amem));
+               geraCodigo(NULL, mepa_buf);
+               pilha_int_desempilhar(&pilha_amem);
               }
 
               ;
 
-// ========== REGRA 08 ========== //
+/* 
+   REGRA 08
+   <parte de declarações de variáveis> ::= 
+    var <declaração de variáveis>
+        {; <declaração de variáveis>}; */
+/*
+   <parte de declaracoes de variaveis> ::=
+      var <declaracao de variaveis>
+         {; <declaracao de variaveis> };
+*/
 parte_declara_vars: { num_vars = 0; } VAR declara_vars { 
                sprintf(mepa_buf, "AMEM %d", num_vars);
-               generateCode(NULL, mepa_buf);
-               stack_push(&pilha_amem, num_vars, NULL, NULL); // stack_int_push
+               geraCodigo(NULL, mepa_buf);
+
+               pilha_int_empilhar(&pilha_amem, num_vars);
                }
-            | {stack_push(&pilha_amem, 0, NULL, NULL);} // stack_int_push
+            | {pilha_int_empilhar(&pilha_amem, 0);}
 ;
 
-// ========== REGRA 09 ========== //
+/*
+   REGRA 09
+   <declaracao de variaveis> ::=
+      <lista de identificadores>: <tipo> 
+*/
 declara_vars: declara_vars declara_var
             | declara_var
 ;
 
-declara_var : { qt_type_atual = 0; }
-              list_id_var DOIS_PONTOS
-              type
-              { set_type(&ts, variable, $4, qt_type_atual); }
+declara_var : { qt_tipo_atual = 0; }
+              lista_id_var DOIS_PONTOS
+              tipo
+              { atribui_tipo(&ts, variavel, $4, qt_tipo_atual); }
               PONTO_E_VIRGULA
 ;
 
-type        : TIPO { $$ = str2type(token); }
+/* 
+   REGRA 6
+   <tipo> ::=
+    <identificador>|
+    array [<índice> {, <índice>}] of <tipo> 
+*/
+tipo        : TIPO { $$ = str2type(token); }
 ;
 
-// ========== REGRA 10 ========== //
-id_list: id_list 
+/* 
+   REGRA 10
+   <lista de identificadores> ::= 
+      <identificador> {, <identificador>} 
+*/
+lista_idents: lista_idents 
               VIRGULA 
               ident_params
             | ident_params
@@ -157,83 +201,98 @@ id_list: id_list
 ident_params: IDENT 
               {
                strcpy(idents[num_params], token);
-               list_parameters[num_params].passage = referencia? reference_parameter : copy_parameter;
+               lista_parametros[num_params].passagem = referencia? parametro_ref : parametro_copia;
                num_params++;
                curr_section_params++;
               }
 ;
-list_id_var: list_id_var VIRGULA IDENT {
-               ti.var.offset = num_vars;
-               s = symbol_init(token, variable, level_lex, ti); 
+lista_id_var: lista_id_var VIRGULA IDENT {
+               ti.var.deslocamento = num_vars;
+               s = cria_simbolo(token, variavel, nivel_lex, ti); 
                push(&ts, s);
-               num_vars++; qt_type_atual++;
+               num_vars++; qt_tipo_atual++;
             }
             | IDENT { 
-               ti.var.offset = num_vars;
-               s = symbol_init(token, variable, level_lex, ti); 
+               ti.var.deslocamento = num_vars;
+               s = cria_simbolo(token, variavel, nivel_lex, ti); 
                push(&ts, s);
-               num_vars++; qt_type_atual++;
+               num_vars++; qt_tipo_atual++;
             }
 ;
 
-// ========== REGRA 11 ========== //
+/* 
+   REGRA 11
+   <parte de declarações de sub-rotinas> ::=
+    {<declaração de procedimento>; |
+    <declaração de função> ;} 
+*/
 parte_declara_subrotinas: parte_declara_subrotinas declara_proc {nr_procs_for_curr_proc++;} 
                           | parte_declara_subrotinas declara_func 
                           |
 ;
 
-// ========== REGRA 12 ========== //
+/*
+   REGRA 12
+   declaração de procedimento> ::=
+      procedure <identificador>
+         [<parâmetros formais>]: <bloco> */
 declara_proc: PROCEDURE 
               IDENT
               {
                strcpy(proc_name, token);
                num_params = 0;
               }
-              parameters_formais_ou_nada
+              parametros_formais_ou_nada
               {
                sprintf(rot_str, "R%02d", rot_num);
-               sprintf(mepa_buf, "ENPR %d", level_lex);
-               generateCode(rot_str, mepa_buf);
+               sprintf(mepa_buf, "ENPR %d", nivel_lex);
+               geraCodigo(rot_str, mepa_buf);
                
-               ti.proc.label = rot_num;
-               ti.proc.parameters_quantity = num_params;
+               ti.proc.rotulo = rot_num;
+               ti.proc.qtd_parametros = num_params;
 
-               memcpy(ti.proc.list, list_parameters, sizeof(struct parameter)*num_params);
+               memcpy(ti.proc.lista, lista_parametros, sizeof(struct parametro)*num_params);
                
                // for(int i = 0; i < num_params; ++i){
-               //    printf("proc.list[%d] tem type %d e passado por %d \n", i, ti.proc.list[i].type, ti.proc.list[i].passage);
+               //    printf("proc.lista[%d] tem tipo %d e passado por %d \n", i, ti.proc.lista[i].tipo, ti.proc.lista[i].passagem);
                // }
-               printf("nome: %s level: %d desloca: %d\n",proc_name, level_lex, ti.var.offset);
+               printf("nome: %s nivel: %d desloca: %d\n",proc_name, nivel_lex, ti.var.deslocamento);
 
-               s = symbol_init(proc_name, procedure, level_lex, ti);
+               s = cria_simbolo(proc_name, procedimento, nivel_lex, ti);
                push(&ts, s);
 
-               // atribui o offset correto e coloca na pilha os símbolos
+               // atribui o deslocamento correto e coloca na pilha os símbolos
                for(int i = num_params-1; i >= 0; --i){
-                  list_symbols[i].content.param.offset = -4 + (i - (num_params-1)); 
-                  printf(">>>>>>>>> Parametro %s tem offset %d\n", list_symbols[i].id, list_symbols[i].content.param.offset);
-                  push(&ts, list_symbols[i]);
+                  lista_simbolos[i].conteudo.param.deslocamento = -4 + (i - (num_params-1)); 
+                  printf(">>>>>>>>> Parametro %s tem deslocamento %d\n", lista_simbolos[i].identificador, lista_simbolos[i].conteudo.param.deslocamento);
+                  push(&ts, lista_simbolos[i]);
                }
                rot_num++; // para o desvio de procedures dentro dessa procedure
-               stack_push(&pilha_amem, num_params, NULL, NULL); // stack_int_push
+               pilha_int_empilhar(&pilha_amem, num_params);
 
                // dentro_proc = 1;
               }
 
               PONTO_E_VIRGULA 
-              block 
+              bloco 
               {
-               remove_n(&ts, stack_int_head(&pilha_amem));
-               sprintf(mepa_buf, "RTPR %d, %d", level_lex, stack_int_head(&pilha_amem));
-               stack_pop(&pilha_amem, NULL);// stack_int_pop
-               remove_n(&ts, stack_int_head(&pilha_procs));
-               stack_pop(&pilha_procs, NULL);// stack_int_pop
-               generateCode(NULL, mepa_buf);
+               remove_n(&ts, pilha_int_topo(&pilha_amem));
+               sprintf(mepa_buf, "RTPR %d, %d", nivel_lex, pilha_int_topo(&pilha_amem));
+               pilha_int_desempilhar(&pilha_amem);
+               remove_n(&ts, pilha_int_topo(&pilha_procs));
+               pilha_int_desempilhar(&pilha_procs);
+               geraCodigo(NULL, mepa_buf);
               }
               PONTO_E_VIRGULA
 ;
 
-// ========== REGRA 13 ========== //
+ /* 
+   REGRA 13
+   <declaração de função> ::=
+    function <identificador>
+        [<parâmetros formais>]: <identificador> ;
+         <bloco> 
+*/
 
 declara_func: FUNCTION
               IDENT
@@ -241,300 +300,319 @@ declara_func: FUNCTION
                strcpy(proc_name, token);
                num_params = 0;
               }
-              parameters_formais_ou_nada
+              parametros_formais_ou_nada
               
               DOIS_PONTOS
-              type
+              tipo
               {
                sprintf(rot_str, "R%02d", rot_num);
-               sprintf(mepa_buf, "ENPR %d", level_lex);
-               generateCode(rot_str, mepa_buf);
+               sprintf(mepa_buf, "ENPR %d", nivel_lex);
+               geraCodigo(rot_str, mepa_buf);
                
-               ti.proc.label = rot_num;
-               ti.proc.parameters_quantity = num_params;
+               ti.proc.rotulo = rot_num;
+               ti.proc.qtd_parametros = num_params;
 
-               memcpy(ti.proc.list, list_parameters, sizeof(struct parameter)*num_params);
+               memcpy(ti.proc.lista, lista_parametros, sizeof(struct parametro)*num_params);
                
                // for(int i = 0; i < num_params; ++i){
-               //    printf("proc.list[%d] tem type %d e passado por %d \n", i, ti.proc.list[i].type, ti.proc.list[i].passage);
+               //    printf("proc.lista[%d] tem tipo %d e passado por %d \n", i, ti.proc.lista[i].tipo, ti.proc.lista[i].passagem);
                // }
-               ti.var.type = $6;
-               ti.var.offset = -4 - num_params;
-               s = symbol_init(proc_name, function, level_lex, ti);
+               ti.var.tipo = $6;
+               ti.var.deslocamento = -4 - num_params;
+               s = cria_simbolo(proc_name, funcao, nivel_lex, ti);
                push(&ts, s);
 
-               // atribui o offset correto e coloca na pilha os símbolos
+               // atribui o deslocamento correto e coloca na pilha os símbolos
                for(int i = num_params-1; i >= 0; --i){
-                  list_symbols[i].content.param.offset = -4 + (i - (num_params-1)); 
-                  push(&ts, list_symbols[i]);
+                  lista_simbolos[i].conteudo.param.deslocamento = -4 + (i - (num_params-1)); 
+                  push(&ts, lista_simbolos[i]);
                }
                rot_num++; // para o desvio de procedures dentro dessa procedure
-               stack_push(&pilha_amem, num_params, NULL, NULL); // stack_int_push
+               pilha_int_empilhar(&pilha_amem, num_params);
 
                // dentro_proc = 1;
               }
               PONTO_E_VIRGULA
 
-              block
+              bloco
               {
-               remove_n(&ts, stack_int_head(&pilha_amem));
-               sprintf(mepa_buf, "RTPR %d, %d", level_lex, stack_int_head(&pilha_amem));
-               stack_pop(&pilha_amem, NULL);// stack_int_pop
+               remove_n(&ts, pilha_int_topo(&pilha_amem));
+               sprintf(mepa_buf, "RTPR %d, %d", nivel_lex, pilha_int_topo(&pilha_amem));
+               pilha_int_desempilhar(&pilha_amem);
 
-               remove_n(&ts, stack_int_head(&pilha_procs));
-               stack_pop(&pilha_procs, NULL);// stack_int_pop
-               generateCode(NULL, mepa_buf);
+               remove_n(&ts, pilha_int_topo(&pilha_procs));
+               pilha_int_desempilhar(&pilha_procs);
+               geraCodigo(NULL, mepa_buf);
               }
               PONTO_E_VIRGULA
 ;
 
-// ========== REGRA 14 ========== //
-parameters_formais_ou_nada: parameters_formais | ;
+/* 
+   REGRA 14
+   <parâmetros formais> ::=
+    (<seção de parâmetros formais> 
+    {: <seção de parâmetros formais>}) */
+parametros_formais_ou_nada: parametros_formais | ;
 
-parameters_formais: ABRE_PARENTESES
-                     parameters
+/* 15. <seção de parâmetros formais> ::=
+    [var] <lista de identificadores>:<identificador>
+   | function <lista de identificadores>:<identificador
+   | procedure <lista de identificadores> */
+
+parametros_formais: ABRE_PARENTESES
+                     parametros
                     FECHA_PARENTESES
 ;
 
-parameters: parameters PONTO_E_VIRGULA secao_parameters | secao_parameters
+parametros: parametros PONTO_E_VIRGULA secao_parametros | secao_parametros
 ;
 
-secao_parameters : var_ou_nada
+secao_parametros : var_ou_nada
                    {curr_section_params = 0;}
-                   id_list 
+                   lista_idents 
                    DOIS_PONTOS 
-                   type
+                   tipo
                    {
-                     // atribui type para os parâmetros dessa seção e coloca numa list de símbolos a serem empilhados
+                     // atribui tipo para os parâmetros dessa seção e coloca numa lista de símbolos a serem empilhados
                      for(int i = num_params-curr_section_params; i < num_params; ++i){
-                        ti.param = list_parameters[i];
-                        ti.param.type = $5;
-                        list_symbols[i] = symbol_init(idents[i], parameter, level_lex, ti);
+                        ti.param = lista_parametros[i];
+                        ti.param.tipo = $5;
+                        lista_simbolos[i] = cria_simbolo(idents[i], parametro, nivel_lex, ti);
                      }
                    }                   
 ;
 
 var_ou_nada: VAR {referencia = 1;} | {referencia = 0;} ;
 
-// ========== REGRA 16 ========== //
+/* 
+   REGRA 16
+   <comando composto> ::=
+      begin <comando>{;<comando>} end  */
 comando_composto: T_BEGIN comandos T_END 
 ;
 
-// ========== REGRA 17 ========== //
-comandos: comando_sem_label | comandos PONTO_E_VIRGULA comando_sem_label;
+/* 
+   REGRA 17
+   <comando> ::=
+    [<número>:]<comando sem rótulo> */
+comandos: comando_sem_rotulo | comandos PONTO_E_VIRGULA comando_sem_rotulo;
 
-// ========== REGRA 18 ========== //
-comando_sem_label: atribuicao_proc
-                  | comando_repetitivo 
+/* 
+   REGRA 18
+   <comando sem rótulo> ::=
+    <atribuição>
+    |<chamada de procedimento>
+    |<desvio>
+    |<comando composto>
+    |<comando condicional>
+    |<comando repetitivo> */
+comando_sem_rotulo: 
+                  atribuicao_proc
+                  | comando_composto
                   | comando_condicional
+                  | comando_repetitivo 
                   | escrita
                   | leitura
                   |
 ;
 
-leitura : READ ABRE_PARENTESES leitura_itens FECHA_PARENTESES;
 
-leitura_itens: leitura_itens VIRGULA item_leitura | item_leitura
-;
 
-item_leitura: IDENT
-               {
-                  generateCode(NULL, "LEIT");
-                  sptr = search(&ts, token);
-                  if(!sptr || sptr->category == procedure){
-                     fprintf(stderr, "COMPILATION ERROR!!!\n Wrong use of read()\n"); 
-                     exit(1);
-                  }
-                  sprintf(mepa_buf, "ARMZ %d, %d", sptr->level, sptr->content.var.offset);
-                  generateCode(NULL, mepa_buf);
-               }
-
-;
-
-escrita : WRITE ABRE_PARENTESES escreve_itens FECHA_PARENTESES;
-
-escreve_itens: escreve_itens VIRGULA expression {generateCode(NULL, "IMPR");}| expression {generateCode(NULL, "IMPR");};
-;
 
 atribuicao_proc:  IDENT 
                   { 
                      // printf("Buscando o token %s\n", token);
-                     sptr_var_proc = search(&ts, token); 
-                     stack_push(NULL, 0, &pilha_ident_esquerdo, sptr_var_proc); // symbols_table_push
+                     sptr_var_proc = busca(&ts, token); 
+                     // printf("Variavel %s tem deslocamento %d\n", sptr_var_proc->identificador, sptr_var_proc->conteudo.var.deslocamento);
+                     pilha_simb_ptr_empilhar(&pilha_ident_esquerdo, sptr_var_proc);
                   } 
                   a_continua
                   { 
-                     stack_pop(NULL, &pilha_ident_esquerdo);// stack_symbols_table_pop
+                     pilha_simb_ptr_desempilhar(&pilha_ident_esquerdo);
                   };
 
 a_continua: ATRIBUICAO {atribui = 1;}atribuicao {atribui = 0;}|
-            procedure_sem_parameter |
-            procedure;
+            procedimento_sem_parametro |
+            procedimento;
 
-// ========== REGRA 19 ========== //
-atribuicao: expression {
-   sptr_var_proc = stack_symbols_table_head(&pilha_ident_esquerdo);
-   if(sptr_var_proc->content.var.type != $1){
+/*
+   REGRA 19
+    <atribuição> ::=
+    <variável>:= <expressão> */
+atribuicao: expressao {
+   sptr_var_proc = pilha_simb_ptr_topo(&pilha_ident_esquerdo);
+   if(sptr_var_proc->conteudo.var.tipo != $1){
       fprintf(stderr, "COMPILATION ERROR!!!\n Variable type differs from expression type.\n"); 
       exit(1);
    }
-   /* search posição da variable */
+   /* busca posição da variavel */
    
    // pode ser indireto
-   // printf("%s: %d", sptr_var_proc->id, sptr_var_proc->category);
-   if (sptr_var_proc->category == variable)
-      sprintf(mepa_buf, "ARMZ %d, %d", sptr_var_proc->level, sptr_var_proc->content.var.offset);
-   else if (sptr_var_proc->category == parameter){
-      if (sptr_var_proc->content.param.passage == copy_parameter)
-         sprintf(mepa_buf, "ARMZ %d, %d", sptr_var_proc->level, sptr_var_proc->content.param.offset);
+   // printf("%s: %d", sptr_var_proc->identificador, sptr_var_proc->categoria);
+   if (sptr_var_proc->categoria == variavel)
+      sprintf(mepa_buf, "ARMZ %d, %d", sptr_var_proc->nivel, sptr_var_proc->conteudo.var.deslocamento);
+   else if (sptr_var_proc->categoria == parametro){
+      if (sptr_var_proc->conteudo.param.passagem == parametro_copia)
+         sprintf(mepa_buf, "ARMZ %d, %d", sptr_var_proc->nivel, sptr_var_proc->conteudo.param.deslocamento);
       else
-         sprintf(mepa_buf, "ARMI %d, %d", sptr_var_proc->level, sptr_var_proc->content.param.offset);
-   } else if (sptr_var_proc->category == function){
-         sprintf(mepa_buf, "ARMZ %d, %d", sptr_var_proc->level, sptr_var_proc->content.var.offset);
+         sprintf(mepa_buf, "ARMI %d, %d", sptr_var_proc->nivel, sptr_var_proc->conteudo.param.deslocamento);
+   } else if (sptr_var_proc->categoria == funcao){
+         sprintf(mepa_buf, "ARMZ %d, %d", sptr_var_proc->nivel, sptr_var_proc->conteudo.var.deslocamento);
    } else {
       fprintf(stderr, "Procedimento tratado como variável!\n");
       exit(1);
    }
-   generateCode(NULL, mepa_buf);
+   geraCodigo(NULL, mepa_buf);
 }
 ;
 
-// ========== REGRA 19 ========== //
-procedure:
+/* 
+   REGRA 19
+   <chamada de procedimento> ::= 
+    <identificador> [(<lista de expressões>)] */
+procedimento:
              {
-               sptr_var_proc = stack_symbols_table_head(&pilha_ident_esquerdo);
+               sptr_var_proc = pilha_simb_ptr_topo(&pilha_ident_esquerdo);
 
               if(!sptr_var_proc){
                   fprintf(stderr, "COMPILATION ERROR!!!\n Procedure not found.\n"); 
                   exit(1);
               }
               sptr_atribuicao = sptr_var_proc;
-              memcpy(&curr_proc, sptr_var_proc, sizeof(struct symbol));
-            //   printf("curr_proc.category = %d\n", curr_proc.category);
-            //   printf("fun: %d\n", function);
-            //   printf("proc: %d\n", procedure);
-              if(curr_proc.category == function ){
-                  generateCode(NULL, "AMEM 1");
+              memcpy(&curr_proc, sptr_var_proc, sizeof(struct simbolo));
+            //   printf("curr_proc.categoria = %d\n", curr_proc.categoria);
+            //   printf("fun: %d\n", funcao);
+            //   printf("proc: %d\n", procedimento);
+              if(curr_proc.categoria == funcao ){
+                  geraCodigo(NULL, "AMEM 1");
               }
-              sprintf(proc_name, "CHPR R%02d, %d", sptr_var_proc->content.proc.label, level_lex);
+              sprintf(proc_name, "CHPR R%02d, %d", sptr_var_proc->conteudo.proc.rotulo, nivel_lex);
              } 
              ABRE_PARENTESES 
              {
                curr_call_params = 0;
                dentro_chamada_proc++;
              }
-             list_expressoes
+             lista_expressoes
              FECHA_PARENTESES
              {
                dentro_chamada_proc--;
-               if(curr_call_params != curr_proc.content.proc.parameters_quantity){
+               if(curr_call_params != curr_proc.conteudo.proc.qtd_parametros){
                    fprintf(stderr, "COMPILATION ERROR!!!\n Wrong number of parameters.\n"); 
                    exit(1);
                }
-               generateCode(NULL, proc_name);
+               geraCodigo(NULL, proc_name);
              }
 ;
 
-procedure_sem_parameter:
+procedimento_sem_parametro:
               {
-               sptr_var_proc = stack_symbols_table_head(&pilha_ident_esquerdo);
+               sptr_var_proc = pilha_simb_ptr_topo(&pilha_ident_esquerdo);
                if(!sptr_var_proc){
                   fprintf(stderr, "COMPILATION ERROR!!!\n Procedure not found.\n"); 
                   exit(1);
                }
-               sprintf(mepa_buf, "CHPR R%02d, %d", sptr_var_proc->content.proc.label, level_lex);
-               generateCode(NULL, mepa_buf);
+               sprintf(mepa_buf, "CHPR R%02d, %d", sptr_var_proc->conteudo.proc.rotulo, nivel_lex);
+               geraCodigo(NULL, mepa_buf);
               }
 
-// ========== REGRA 23 ========== //
-comando_repetitivo:  WHILE {
-                        stack_push(&pilha_labels, rot_num, NULL, NULL); // stack_int_push
-                         
-                        sprintf(rot_str, "R%02d", rot_num);
-                        generateCode(rot_str, "NADA");
-                        rot_num += 2;
-                     }
-                     expression {
-                        sprintf(mepa_buf, "DSVF R%02d", stack_int_head(&pilha_labels)+1);
-                        generateCode(NULL, mepa_buf); // falta testar expressão
-                     }
-                     DO 
-                     comando_sem_label_ou_composto {
-                        sprintf(mepa_buf, "DSVS R%02d", stack_int_head(&pilha_labels));
-                        generateCode(NULL, mepa_buf);
-
-                        sprintf(rot_str, "R%02d", stack_int_head(&pilha_labels)+1);
-                        generateCode(rot_str, "NADA");
-
-                        stack_pop(&pilha_labels, NULL);// stack_int_pop
-                     }
-;
-
-comando_sem_label_ou_composto: comando_sem_label | comando_composto;
 
 // ========== REGRA 22 ========== //
+/* <comando condicional> ::=
+    if <expressão> then <comando sem rótulo>
+        [else <comando sem rótulo>] */
 
-comando_condicional: IF expression {
+comando_condicional: IF expressao {
                         if ($2 != pas_boolean){
                            fprintf(stderr, "COMPILATION ERROR!!!\n If expression is not boolean!\n");
                            exit(1);
                         }
 
                         sprintf(mepa_buf, "DSVF R%02d", rot_num+1);
-                        generateCode(NULL, mepa_buf); // falta testar expressão
-                        
-                        stack_push(&pilha_labels, rot_num, NULL, NULL);// stack_int_push
+                        geraCodigo(NULL, mepa_buf); // falta testar expressão
+
+                        pilha_int_empilhar(&pilha_rotulos, rot_num);
                         rot_num += 2;
                      }  
                      THEN
-                     comando_sem_label_ou_composto {
-                        sprintf(mepa_buf, "DSVS R%02d", stack_int_head(&pilha_labels));
-                        generateCode(NULL, mepa_buf);
+                     comando_sem_rotulo {
+                        sprintf(mepa_buf, "DSVS R%02d", pilha_int_topo(&pilha_rotulos));
+                        geraCodigo(NULL, mepa_buf);
 
-                        sprintf(rot_str, "R%02d", stack_int_head(&pilha_labels)+1);
-                        generateCode(rot_str, "NADA");
+                        sprintf(rot_str, "R%02d", pilha_int_topo(&pilha_rotulos)+1);
+                        geraCodigo(rot_str, "NADA");
 
                      } 
                      else_ou_nada{
-                        sprintf(rot_str, "R%02d", stack_int_head(&pilha_labels));
-                        generateCode(rot_str, "NADA");
+                        sprintf(rot_str, "R%02d", pilha_int_topo(&pilha_rotulos));
+                        geraCodigo(rot_str, "NADA");
 
-                        stack_pop(&pilha_labels, NULL);// stack_int_pop
+                        pilha_int_desempilhar(&pilha_rotulos);
                      }
 ;
 
-else_ou_nada: ELSE comando_sem_label_ou_composto 
-            | %prec "lower_then_else"
+else_ou_nada: ELSE comando_sem_rotulo 
+            | %prec LOWER_THEN_ELSE
 ;
 
-// ========== REGRA 25 ========== //
+// ========== REGRA 23 ========== //
+/* <comando repetitivo> ::=
+    while <expressão> do <comando sem rótulo> */
+comando_repetitivo:  WHILE {
+                        pilha_int_empilhar(&pilha_rotulos, rot_num);
+                         
+                        sprintf(rot_str, "R%02d", rot_num);
+                        geraCodigo(rot_str, "NADA");
+                        rot_num += 2;
+                     }
+                     expressao {
+                        sprintf(mepa_buf, "DSVF R%02d", pilha_int_topo(&pilha_rotulos)+1);
+                        geraCodigo(NULL, mepa_buf); // falta testar expressão
+                     }
+                     DO 
+                     comando_sem_rotulo {
+                        sprintf(mepa_buf, "DSVS R%02d", pilha_int_topo(&pilha_rotulos));
+                        geraCodigo(NULL, mepa_buf);
 
-list_expressoes:  expression
+                        sprintf(rot_str, "R%02d", pilha_int_topo(&pilha_rotulos)+1);
+                        geraCodigo(rot_str, "NADA");
+
+                        pilha_int_desempilhar(&pilha_rotulos);
+                     }
+;
+
+
+// ========== REGRA 25 ========== //
+/* <expressão> ::=
+    <expressão simples>[<relação><expressão simples>] */
+
+lista_expressoes:  expressao
                   {  
                      // curr_section_params++;
                      curr_call_params++;
                   } 
                   VIRGULA 
-                  list_expressoes 
-                  | expression 
+                  lista_expressoes 
+                  | expressao 
                   {
                      // curr_section_params++;
                      curr_call_params++;
                   };
 
-expression   : simple_expression { $$ = $1; } 
-            | simple_expression relation simple_expression{
+expressao   : expressao_simples { $$ = $1; } 
+            | expressao_simples relacao expressao_simples{
                if ($1 != $3){
                   fprintf(stderr, "COMPILATION ERROR!!!\nCannot compare expressions with different types!\n");
                   exit(1);
                }
-               generateCode(NULL, $2);
+               geraCodigo(NULL, $2);
                $$ = pas_boolean;
             }
 ;
 
 // ========== REGRA 26 ========== //
-relation  : IGUAL        { $$ = "CMIG"; }
+/* <relação> ::= =|<>|<|<=|>=|> */
+relacao  : IGUAL        { $$ = "CMIG"; }
          | DIFERENTE    { $$ = "CMDG"; }
          | MENOR        { $$ = "CMME"; }
          | MENOR_IGUAL  { $$ = "CMEG"; }
@@ -543,7 +621,9 @@ relation  : IGUAL        { $$ = "CMIG"; }
 ;
 
 // ========== REGRA 27 ========== //
-simple_expression : simple_expression plus_minus_or term {
+ /* <expressão simples> ::=
+    [+|-] <termo>{(+|-|or) <termo>} */
+expressao_simples : expressao_simples mais_menos_or termo {
                      if (strcmp($2, "DISJ") == 0){
                         if ($1 != pas_boolean || $3 != pas_boolean){
                            fprintf(stderr, "COMPILATION ERROR!!!\n Boolean operation with non-boolean operands!\n");
@@ -559,9 +639,9 @@ simple_expression : simple_expression plus_minus_or term {
                         $$ = pas_integer;
                      }
                      
-                     generateCode(NULL, $2);
+                     geraCodigo(NULL, $2);
                   }
-                  | plus_minus_empty term{
+                  | mais_menos_vazio termo{
                      if ( strcmp($1, "VAZIO") != 0){
                         if ($2 != pas_integer){
                            fprintf(stderr, "COMPILATION ERROR!!!\n Sign on non integer type!\n");
@@ -573,22 +653,24 @@ simple_expression : simple_expression plus_minus_or term {
                      }
                      
                      if ( strcmp($1, "MENOS") == 0 )
-                        generateCode(NULL, "INVR");
+                        geraCodigo(NULL, "INVR");
                   } 
 ;
 
-plus_minus_empty  : MAIS  { $$ = "MAIS"; }
+mais_menos_vazio  : MAIS  { $$ = "MAIS"; }
                   | MENOS { $$ = "MENOS"; }
                   |       { $$ = "VAZIO"; }
 ;
 
-plus_minus_or  : MAIS { $$ = strdup("SOMA"); }
+mais_menos_or  : MAIS { $$ = strdup("SOMA"); }
                | MENOS { $$ = strdup("SUBT"); } 
                | OR { $$ = strdup("DISJ"); }
 ; 
 
 // ========== REGRA 28 ========== //
-term : term times_div_and factor { 
+/* <termo> ::=
+    <fator> {(*|div|and) <fator>} */
+termo : termo vezes_div_and fator { 
          if (strcmp($2, "CONJ") == 0){
             if ($1 != pas_boolean || $3 != pas_boolean){
                fprintf(stderr, "COMPILATION ERROR!!!\n Boolean operation with non-boolean operands!\n");
@@ -603,93 +685,100 @@ term : term times_div_and factor {
             }
             $$ = pas_integer;
          }
-         generateCode(NULL, $2);
+         geraCodigo(NULL, $2);
       }
-      | factor
+      | fator
 ;
 
-times_div_and  : VEZES { $$ = strdup("MULT"); }
+vezes_div_and  : VEZES { $$ = strdup("MULT"); }
                | DIV { $$ = strdup("DIVI"); }
                | AND { $$ = strdup("CONJ"); }
 ;
 
-// ========== REGRA 29 ========== //
-procedure_ou_nada: procedure {
-                        sptr_var_proc = stack_symbols_table_head(&pilha_ident_esquerdo);
-                        stack_pop(NULL, &pilha_ident_esquerdo);// stack_symbols_table_pop
+/* 
+   REGRA 29 -- TODO VERIFICAR
+   <fator>::=
+    <variável>
+    |<número>
+    |<chamada de função>
+    |(<expressão>)
+    |not <fator> */
+procedimento_ou_nada: procedimento {
+                        sptr_var_proc = pilha_simb_ptr_topo(&pilha_ident_esquerdo);
+                        pilha_simb_ptr_desempilhar(&pilha_ident_esquerdo);
                      }
                      | {
-                        sptr = stack_symbols_table_head(&pilha_ident_esquerdo); 
-                        stack_pop(NULL, &pilha_ident_esquerdo);// stack_symbols_table_pop
+                        sptr = pilha_simb_ptr_topo(&pilha_ident_esquerdo); 
+                        pilha_simb_ptr_desempilhar(&pilha_ident_esquerdo); 
                      };
 
-factor : IDENT 
+fator : IDENT /// TODO VERIFICAR
          {
-            sptr = search(&ts, token);
-            stack_push(NULL, 0, &pilha_ident_esquerdo, search(&ts, token));//symbols_table_push
+            sptr = busca(&ts, token);
+            pilha_simb_ptr_empilhar(&pilha_ident_esquerdo, busca(&ts, token));
 
-         } procedure_ou_nada { 
+         } procedimento_ou_nada { 
 
          if(!sptr){
             printf("Variável não encontrada\n");
             exit(1);
          }
          
-         // printf("Variavel %s level %d, offset %d\n", sptr->id, sptr->level, sptr->content.var.offset);
-         $$ = sptr->content.var.type;
+         // printf("Variavel %s nivel %d, deslocamento %d\n", sptr->identificador, sptr->nivel, sptr->conteudo.var.deslocamento);
+         $$ = sptr->conteudo.var.tipo;
          // pode ser indireto
          int flag = 0;
-         if (sptr->category == variable){
+         if (sptr->categoria == variavel){
             
             if (dentro_chamada_proc){
-               int qtd_params = sptr_var_proc->content.proc.parameters_quantity;
+               int qtd_params = sptr_var_proc->conteudo.proc.qtd_parametros;
                // printf("curr: %d actual: %d\n", curr_call_params, qtd_params);
                if (curr_call_params >= qtd_params){
                   fprintf(stderr, "COMPILATION ERROR! Excesso de parâmetros em função!!\n");
                   exit(1);
                }
-               if (sptr_var_proc->content.proc.list[curr_call_params].passage == reference_parameter){
-                  sprintf(mepa_buf, "CREN %d, %d", sptr->level, sptr->content.var.offset);
+               if (sptr_var_proc->conteudo.proc.lista[curr_call_params].passagem == parametro_ref){
+                  sprintf(mepa_buf, "CREN %d, %d", sptr->nivel, sptr->conteudo.var.deslocamento);
                }
-               else if (sptr_var_proc->content.proc.list[curr_call_params].passage == copy_parameter){
-                  sprintf(mepa_buf, "CRVL %d, %d", sptr->level, sptr->content.var.offset);
+               else if (sptr_var_proc->conteudo.proc.lista[curr_call_params].passagem == parametro_copia){
+                  sprintf(mepa_buf, "CRVL %d, %d", sptr->nivel, sptr->conteudo.var.deslocamento);
                }else {
-                  fprintf(stderr, "INTERNAL ERROR: parameter não é nem copia nem referencia\n");
+                  fprintf(stderr, "INTERNAL ERROR: parametro não é nem copia nem referencia\n");
                   exit(1);
                }
-            } else if (sptr_var_proc && sptr_var_proc->category != function){
-               sprintf(mepa_buf, "CRVL %d, %d", sptr->level, sptr->content.var.offset);
-            } else if (atribui && (sptr_var_proc && sptr_var_proc->category == function) && sptr_atribuicao->category != function){
-               sprintf(mepa_buf, "CRVL %d, %d", sptr->level, sptr->content.var.offset);
+            } else if (sptr_var_proc && sptr_var_proc->categoria != funcao){
+               sprintf(mepa_buf, "CRVL %d, %d", sptr->nivel, sptr->conteudo.var.deslocamento);
+            } else if (atribui && (sptr_var_proc && sptr_var_proc->categoria == funcao) && sptr_atribuicao->categoria != funcao){
+               sprintf(mepa_buf, "CRVL %d, %d", sptr->nivel, sptr->conteudo.var.deslocamento);
 
             } else {
                flag = 1;
             }
 
          }
-         else if (sptr->category == parameter){
-            if (sptr->content.param.passage == copy_parameter)
-               sprintf(mepa_buf, "CRVL %d, %d", sptr->level, sptr->content.param.offset);
+         else if (sptr->categoria == parametro){
+            if (sptr->conteudo.param.passagem == parametro_copia)
+               sprintf(mepa_buf, "CRVL %d, %d", sptr->nivel, sptr->conteudo.param.deslocamento);
             else {
-               if(sptr_var_proc->content.proc.list[curr_call_params].passage == reference_parameter){
-                  sprintf(mepa_buf, "CRVL %d, %d", sptr->level, sptr->content.param.offset);
+               if(sptr_var_proc->conteudo.proc.lista[curr_call_params].passagem == parametro_ref){
+                  sprintf(mepa_buf, "CRVL %d, %d", sptr->nivel, sptr->conteudo.param.deslocamento);
                } else {
-                  sprintf(mepa_buf, "CRVI %d, %d", sptr->level, sptr->content.param.offset);
+                  sprintf(mepa_buf, "CRVI %d, %d", sptr->nivel, sptr->conteudo.param.deslocamento);
                }
             }
-         } else if (sptr->category != function){
+         } else if (sptr->categoria != funcao){
             fprintf(stderr, "Procedimento tratado como variável!!\n");
             exit(1);
          } else {
             flag = 1;
          }
          if(!flag)
-            generateCode(NULL, mepa_buf);
+            geraCodigo(NULL, mepa_buf);
       } 
       | NUMERO {
          $$ = pas_integer;
          sprintf (mepa_buf, "CRCT %d", atoi(token));
-         generateCode(NULL, mepa_buf);
+         geraCodigo(NULL, mepa_buf);
       }
       | VALOR_BOOL {
          $$ = pas_boolean;
@@ -697,60 +786,87 @@ factor : IDENT
             sprintf (mepa_buf, "CRCT %d", 1);
          else
             sprintf (mepa_buf, "CRCT %d", 0);
-         generateCode(NULL, mepa_buf);
+         geraCodigo(NULL, mepa_buf);
       }
-      | ABRE_PARENTESES expression FECHA_PARENTESES { $$ = $2; }
-      | NOT factor {
+      | ABRE_PARENTESES expressao FECHA_PARENTESES { $$ = $2; }
+      | NOT fator {
          if ($2 != pas_boolean){
             fprintf(stderr, "COMPILATION ERROR!!! Boolean operation with non-boolean value!\n");
             exit(1);
          }
          $$ = pas_boolean;
-         generateCode(NULL, "NEGA");
+         geraCodigo(NULL, "NEGA");
        }
          /* falta chamada de função */
-      /* | IDENT procedure {$$ = sptr_var_proc->content.var.type;} */
+      /* | IDENT procedimento {$$ = sptr_var_proc->conteudo.var.tipo;} */
 ;
 
 // ========== REGRA 30 ========== //
-/* variable:   IDENT { sptr = search(&ts, token);} 
-                  | IDENT { sptr = search(&ts, token);}procedure ; */
+/* variavel:   IDENT { sptr = busca(&ts, token);} 
+                  | IDENT { sptr = busca(&ts, token);}procedimento ; */
+
+/*  ADICIONAR REGRA NUMERO */
+
+/////// regras sem regras
+leitura : READ ABRE_PARENTESES leitura_itens FECHA_PARENTESES;
+
+leitura_itens: leitura_itens VIRGULA item_leitura | item_leitura
+;
+
+item_leitura: IDENT
+               {
+                  geraCodigo(NULL, "LEIT");
+                  sptr = busca(&ts, token);
+                  if(!sptr || sptr->categoria == procedimento){
+                     fprintf(stderr, "COMPILATION ERROR!!!\n Wrong use of read()\n"); 
+                     exit(1);
+                  }
+                  sprintf(mepa_buf, "ARMZ %d, %d", sptr->nivel, sptr->conteudo.var.deslocamento);
+                  geraCodigo(NULL, mepa_buf);
+               }
+
+;
+
+escrita : WRITE ABRE_PARENTESES escreve_itens FECHA_PARENTESES;
+
+escreve_itens: escreve_itens VIRGULA expressao {geraCodigo(NULL, "IMPR");}| expressao {geraCodigo(NULL, "IMPR");};
+;
 
 %%
 
-int main (int argc, char** argv) 
-{
+int main (int argc, char** argv) {
    FILE* fp;
    extern FILE* yyin;
 
-   if ( argc<2 || argc>2 )
-   {
-         printf("ERROR: Compiler usage: ./compilador <testFile>.pas, you've passed %d argument, but we need one test file\n", argc);
+   if (argc<2 || argc>2) {
+         printf("usage compilador <arq>a %d\n", argc);
          return(-1);
-   }
+      }
 
    fp=fopen (argv[1], "r");
-   if ( fp == NULL ) 
-   {
-      printf("ERROR: File %s passed is NULL.\n", argv[1]);
+   if (fp == NULL) {
+      printf("usage compilador <arq>b\n");
       return(-1);
    }
 
-   /* Initialize Tables */
-   table_init(&ts);
-   table_init(&pilha_atribuicao);
-   stack_init(&pilha_labels, NULL);
-   stack_init(&pilha_amem, NULL);
-   stack_init(&pilha_procs, &pilha_ident_esquerdo);
+
+/* -------------------------------------------------------------------
+ *  Inicia a Tabela de S�mbolos
+ * ------------------------------------------------------------------- */
+   inicializa(&ts);
+   inicializa(&pilha_atribuicao);
+   pilha_int_inicializar(&pilha_rotulos);
+   pilha_int_inicializar(&pilha_amem);
+   pilha_int_inicializar(&pilha_procs);
+   pilha_simb_ptr_inicializar(&pilha_ident_esquerdo);
 
    yyin=fp;
    yyparse();
 
-   /* Destruct Tables */
-   stack_destruct(&pilha_labels, NULL);
-   stack_destruct(&pilha_amem, NULL);
-   stack_destruct(&pilha_procs, NULL);
-   stack_destruct(NULL, &pilha_ident_esquerdo);
+   pilha_int_destruir(&pilha_rotulos);
+   pilha_int_destruir(&pilha_amem);
+   pilha_int_destruir(&pilha_procs);
+   pilha_simb_ptr_destruir(&pilha_ident_esquerdo);
 
    return 0;
 }

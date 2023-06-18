@@ -1,9 +1,27 @@
+
+/* -------------------------------------------------------------------
+ *            Arquivo: compilador.l
+ * -------------------------------------------------------------------
+ *              Autor: Bruno Muller Junior
+ *               Data: 08/2007
+ *      Atualizado em: [09/08/2020, 19h:01m]
+ *
+ * -------------------------------------------------------------------
+ *
+ * Tipos, protótipos e variáveis globais do compilador (via extern)
+ *
+ * ------------------------------------------------------------------- */
+
 %{
+
+
 #include<stdio.h>
 #include<string.h>
-#include "./utilsH/compilador.h"
+
+#include "compilador.h"
 #include "compilador.tab.h"
 
+//#define IMPRIME(STR) {};
 #define IMPRIME(STR) printf("%s\t# %s \n", STR, token);
 
 int nl = 1;

@@ -1,25 +1,37 @@
+ # -------------------------------------------------------------------
+ #            Arquivo: Makefile
+ # -------------------------------------------------------------------
+ #              Autor: Bruno Müller Junior
+ #               Data: 08/2007
+ #      Atualizado em: [09/08/2020, 19h:01m]
+ #
+ # -------------------------------------------------------------------
+
 $DEPURA=1
 
-compilador: lex.yy.c compilador.tab.c compilador.o symbols_table.o stack.o
-	gcc lex.yy.c compilador.tab.c compilador.o symbols_table.o stack.o -o compilador -lfl -L /usr/lib/x86_64-linux-gnu -ly -lc -g
+compilador: lex.yy.c compilador.tab.c compilador.o tabela_simb.o simbolo.o pilha_int.o pilha_simb_ptr.o
+	gcc lex.yy.c compilador.tab.c compilador.o tabela_simb.o simbolo.o pilha_int.o pilha_simb_ptr.o -o compilador -lfl -L /usr/lib/x86_64-linux-gnu -ly -lc -g
 
-compilador.o: utilsH/compilador.h utilsC/compiladorF.c
-	gcc -c utilsC/compiladorF.c -o compilador.o
-
-lex.yy.c: compilador.l ./utilsH/compilador.h
+lex.yy.c: compilador.l compilador.h
 	flex compilador.l
 
-compilador.tab.c: compilador.y utilsH/compilador.h
+compilador.tab.c: compilador.y compilador.h
 	bison compilador.y -d -v
 
-symbols_table.o: utilsC/symbols_table.c utilsH/symbols_table.h
-	gcc -c utilsC/symbols_table.c -o symbols_table.o
+tabela_simb.o: utils/tabela_simb/tabela_simb.c utils/tabela_simb/tabela_simb.h
+	gcc -c utils/tabela_simb/tabela_simb.c -o tabela_simb.o
 
-stack.o: utilsC/stack.c utilsH/stack.h
-	gcc -c utilsC/stack.c -o stack.o
+simbolo.o: utils/tabela_simb/simbolo.c utils/tabela_simb/simbolo.h
+	gcc -c utils/tabela_simb/simbolo.c -o simbolo.o
 
-clean:
-	rm -f compilador.tab.* lex.yy.c compilador.o compilador symbols_table.o stack.o MEPA compilador.output
+pilha_int.o: utils/pilha/pilha_int.c utils/pilha/pilha_int.h
+	gcc -c utils/pilha/pilha_int.c -o pilha_int.o
 
-purge: clean 
-	
+pilha_simb_ptr.o: utils/pilha/pilha_simb_ptr.c utils/pilha/pilha_simb_ptr.h
+	gcc -c utils/pilha/pilha_simb_ptr.c -o pilha_simb_ptr.o
+
+compilador.o : compilador.h compiladorF.c
+	gcc -c compiladorF.c -o compilador.o
+
+clean :
+	rm -f compilador.tab.* lex.yy.c *.o compilador
