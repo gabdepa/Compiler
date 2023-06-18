@@ -85,8 +85,9 @@ int rot_w;
 %%
 
 // ========== 
-/* <programa> ::=
+/* 
    REGRA 01
+   <programa> ::=
    program <identificador> (<lista de identificadores>);      
       <bloco>. */
 /*
@@ -145,14 +146,19 @@ bloco       :
               ;
 
 /* 
+   REGRA 6
+   <tipo> ::=
+    <identificador>|
+    array [<índice> {, <índice>}] of <tipo> 
+*/
+tipo        : TIPO { $$ = str2type(token); }
+;
+
+/* 
    REGRA 08
    <parte de declarações de variáveis> ::= 
     var <declaração de variáveis>
-        {; <declaração de variáveis>}; */
-/*
-   <parte de declaracoes de variaveis> ::=
-      var <declaracao de variaveis>
-         {; <declaracao de variaveis> };
+        {; <declaração de variáveis>}; 
 */
 parte_declara_vars: { num_vars = 0; } VAR declara_vars { 
                sprintf(mepa_buf, "AMEM %d", num_vars);
@@ -177,15 +183,6 @@ declara_var : { qt_tipo_atual = 0; }
               tipo
               { atribui_tipo(&ts, variavel, $4, qt_tipo_atual); }
               PONTO_E_VIRGULA
-;
-
-/* 
-   REGRA 6
-   <tipo> ::=
-    <identificador>|
-    array [<índice> {, <índice>}] of <tipo> 
-*/
-tipo        : TIPO { $$ = str2type(token); }
 ;
 
 /* 
@@ -242,7 +239,7 @@ declara_proc: PROCEDURE
                strcpy(proc_name, token);
                num_params = 0;
               }
-              parametros_formais_ou_nada
+              parametros_formais__ou_vazio
               {
                sprintf(rot_str, "R%02d", rot_num);
                sprintf(mepa_buf, "ENPR %d", nivel_lex);
@@ -300,7 +297,7 @@ declara_func: FUNCTION
                strcpy(proc_name, token);
                num_params = 0;
               }
-              parametros_formais_ou_nada
+              parametros_formais__ou_vazio
               
               DOIS_PONTOS
               tipo
@@ -352,12 +349,8 @@ declara_func: FUNCTION
    <parâmetros formais> ::=
     (<seção de parâmetros formais> 
     {: <seção de parâmetros formais>}) */
-parametros_formais_ou_nada: parametros_formais | ;
+parametros_formais__ou_vazio: parametros_formais | ;
 
-/* 15. <seção de parâmetros formais> ::=
-    [var] <lista de identificadores>:<identificador>
-   | function <lista de identificadores>:<identificador
-   | procedure <lista de identificadores> */
 
 parametros_formais: ABRE_PARENTESES
                      parametros
@@ -367,7 +360,15 @@ parametros_formais: ABRE_PARENTESES
 parametros: parametros PONTO_E_VIRGULA secao_parametros | secao_parametros
 ;
 
-secao_parametros : var_ou_nada
+/* 
+   REGRA 15
+   <seção de parâmetros formais> ::=
+      [var] <lista de identificadores>:<identificador> | 
+      function <lista de identificadores>:<identificador | 
+      procedure <lista de identificadores> 
+*/
+
+secao_parametros : var__ou_vazio
                    {curr_section_params = 0;}
                    lista_idents 
                    DOIS_PONTOS 
@@ -382,12 +383,13 @@ secao_parametros : var_ou_nada
                    }                   
 ;
 
-var_ou_nada: VAR {referencia = 1;} | {referencia = 0;} ;
+var__ou_vazio: VAR {referencia = 1;} | {referencia = 0;} ;
 
 /* 
    REGRA 16
    <comando composto> ::=
-      begin <comando>{;<comando>} end  */
+      begin <comando>{;<comando>} end  
+*/
 comando_composto: T_BEGIN comandos T_END 
 ;
 
@@ -405,7 +407,8 @@ comandos: comando_sem_rotulo | comandos PONTO_E_VIRGULA comando_sem_rotulo;
     |<desvio>
     |<comando composto>
     |<comando condicional>
-    |<comando repetitivo> */
+    |<comando repetitivo>
+*/
 comando_sem_rotulo: 
                   atribuicao_proc
                   | comando_composto
@@ -415,7 +418,6 @@ comando_sem_rotulo:
                   | leitura
                   |
 ;
-
 
 
 
@@ -438,7 +440,8 @@ a_continua: ATRIBUICAO {atribui = 1;}atribuicao {atribui = 0;}|
 /*
    REGRA 19
     <atribuição> ::=
-    <variável>:= <expressão> */
+    <variável>:= <expressão> 
+*/
 atribuicao: expressao {
    sptr_var_proc = pilha_simb_ptr_topo(&pilha_ident_esquerdo);
    if(sptr_var_proc->conteudo.var.tipo != $1){
@@ -467,9 +470,10 @@ atribuicao: expressao {
 ;
 
 /* 
-   REGRA 19
+   REGRA 20
    <chamada de procedimento> ::= 
-    <identificador> [(<lista de expressões>)] */
+    <identificador> [(<lista de expressões>)] 
+*/
 procedimento:
              {
                sptr_var_proc = pilha_simb_ptr_topo(&pilha_ident_esquerdo);
@@ -517,10 +521,12 @@ procedimento_sem_parametro:
               }
 
 
-// ========== REGRA 22 ========== //
-/* <comando condicional> ::=
+/*
+   REGRA 22
+   <comando condicional> ::=
     if <expressão> then <comando sem rótulo>
-        [else <comando sem rótulo>] */
+        [else <comando sem rótulo>] 
+*/
 
 comando_condicional: IF expressao {
                         if ($2 != pas_boolean){
@@ -543,7 +549,7 @@ comando_condicional: IF expressao {
                         geraCodigo(rot_str, "NADA");
 
                      } 
-                     else_ou_nada{
+                     else__ou_vazio{
                         sprintf(rot_str, "R%02d", pilha_int_topo(&pilha_rotulos));
                         geraCodigo(rot_str, "NADA");
 
@@ -551,13 +557,15 @@ comando_condicional: IF expressao {
                      }
 ;
 
-else_ou_nada: ELSE comando_sem_rotulo 
+else__ou_vazio: ELSE comando_sem_rotulo 
             | %prec LOWER_THEN_ELSE
 ;
 
-// ========== REGRA 23 ========== //
-/* <comando repetitivo> ::=
-    while <expressão> do <comando sem rótulo> */
+/* 
+   REGRA 23
+   <comando repetitivo> ::=
+      while <expressão> do <comando sem rótulo> 
+*/
 comando_repetitivo:  WHILE {
                         pilha_int_empilhar(&pilha_rotulos, rot_num);
                          
@@ -582,9 +590,10 @@ comando_repetitivo:  WHILE {
 ;
 
 
-// ========== REGRA 25 ========== //
-/* <expressão> ::=
-    <expressão simples>[<relação><expressão simples>] */
+/*
+   REGRA 25
+   <expressão> ::=
+      <expressão simples>[<relação><expressão simples>] */
 
 lista_expressoes:  expressao
                   {  
@@ -610,8 +619,10 @@ expressao   : expressao_simples { $$ = $1; }
             }
 ;
 
-// ========== REGRA 26 ========== //
-/* <relação> ::= =|<>|<|<=|>=|> */
+/* 
+   REGRA 26
+   <relação> ::= =|<>|<|<=|>=|> 
+*/
 relacao  : IGUAL        { $$ = "CMIG"; }
          | DIFERENTE    { $$ = "CMDG"; }
          | MENOR        { $$ = "CMME"; }
@@ -620,9 +631,11 @@ relacao  : IGUAL        { $$ = "CMIG"; }
          | MAIOR        { $$ = "CMMA"; }
 ;
 
-// ========== REGRA 27 ========== //
- /* <expressão simples> ::=
-    [+|-] <termo>{(+|-|or) <termo>} */
+ /*
+   REGRA 27
+   <expressão simples> ::=
+    [+|-] <termo>{(+|-|or) <termo>} 
+*/
 expressao_simples : expressao_simples mais_menos_or termo {
                      if (strcmp($2, "DISJ") == 0){
                         if ($1 != pas_boolean || $3 != pas_boolean){
@@ -667,9 +680,10 @@ mais_menos_or  : MAIS { $$ = strdup("SOMA"); }
                | OR { $$ = strdup("DISJ"); }
 ; 
 
-// ========== REGRA 28 ========== //
-/* <termo> ::=
-    <fator> {(*|div|and) <fator>} */
+/*
+REGRA 28
+   <termo> ::=
+      <fator> {(*|div|and) <fator>} */
 termo : termo vezes_div_and fator { 
          if (strcmp($2, "CONJ") == 0){
             if ($1 != pas_boolean || $3 != pas_boolean){
@@ -703,7 +717,7 @@ vezes_div_and  : VEZES { $$ = strdup("MULT"); }
     |<chamada de função>
     |(<expressão>)
     |not <fator> */
-procedimento_ou_nada: procedimento {
+procedimento__ou_vazio: procedimento {
                         sptr_var_proc = pilha_simb_ptr_topo(&pilha_ident_esquerdo);
                         pilha_simb_ptr_desempilhar(&pilha_ident_esquerdo);
                      }
@@ -717,7 +731,7 @@ fator : IDENT /// TODO VERIFICAR
             sptr = busca(&ts, token);
             pilha_simb_ptr_empilhar(&pilha_ident_esquerdo, busca(&ts, token));
 
-         } procedimento_ou_nada { 
+         } procedimento__ou_vazio { 
 
          if(!sptr){
             printf("Variável não encontrada\n");
