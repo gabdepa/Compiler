@@ -84,37 +84,35 @@ int rot_w;
 
 %%
 
-// ========== 
 /* 
    REGRA 01
    <programa> ::=
    program <identificador> (<lista de identificadores>);      
-      <bloco>. */
-/*
-   <program> ::=
-      program <identificador> { <lista de identificadores>};
-         <bloco>
+      <bloco>. 
 */
-programa    :{
+programa    :
+            PROGRAM IDENT
+            {
              geraCodigo (NULL, "INPP");
              nivel_lex = 0;
              rot_num = 0;
              dentro_chamada_proc = 0;
              }
-             PROGRAM IDENT
              ABRE_PARENTESES lista_idents FECHA_PARENTESES PONTO_E_VIRGULA
              bloco PONTO {
              geraCodigo (NULL, "PARA");
              }
 ;
 
-/* REGRA 02  
-<bloco> ::=
-    [<parte de declarações de rótulos>] 
-    [<parte de definições de tipos>]
-    [<parte de declarações de variáveis>]
-    [<parte de declarações de sub-rotinas>] 
-    <comando composto> */
+/* 
+   REGRA 02  
+   <bloco> ::=
+      [<parte de declarações de rótulos>] 
+      [<parte de definições de tipos>]
+      [<parte de declarações de variáveis>]
+      [<parte de declarações de sub-rotinas>] 
+      <comando composto> 
+*/
 bloco       :
               parte_declara_vars
               {
@@ -160,7 +158,8 @@ tipo        : TIPO { $$ = str2type(token); }
     var <declaração de variáveis>
         {; <declaração de variáveis>}; 
 */
-parte_declara_vars: { num_vars = 0; } VAR declara_vars { 
+parte_declara_vars: { num_vars = 0; } // inicializacao do num_vars como 0
+            VAR declara_vars { 
                sprintf(mepa_buf, "AMEM %d", num_vars);
                geraCodigo(NULL, mepa_buf);
 
@@ -169,40 +168,22 @@ parte_declara_vars: { num_vars = 0; } VAR declara_vars {
             | {pilha_int_empilhar(&pilha_amem, 0);}
 ;
 
+
+declara_vars: declara_vars declara_var
+            | declara_var
+;
+
 /*
    REGRA 09
    <declaracao de variaveis> ::=
       <lista de identificadores>: <tipo> 
 */
-declara_vars: declara_vars declara_var
-            | declara_var
-;
-
 declara_var : { qt_tipo_atual = 0; }
-              lista_id_var DOIS_PONTOS
-              tipo
+              lista_id_var DOIS_PONTOS tipo
               { atribui_tipo(&ts, variavel, $4, qt_tipo_atual); }
               PONTO_E_VIRGULA
 ;
 
-/* 
-   REGRA 10
-   <lista de identificadores> ::= 
-      <identificador> {, <identificador>} 
-*/
-lista_idents: lista_idents 
-              VIRGULA 
-              ident_params
-            | ident_params
-;
-ident_params: IDENT 
-              {
-               strcpy(idents[num_params], token);
-               lista_parametros[num_params].passagem = referencia? parametro_ref : parametro_copia;
-               num_params++;
-               curr_section_params++;
-              }
-;
 lista_id_var: lista_id_var VIRGULA IDENT {
                ti.var.deslocamento = num_vars;
                s = cria_simbolo(token, variavel, nivel_lex, ti); 
@@ -218,13 +199,35 @@ lista_id_var: lista_id_var VIRGULA IDENT {
 ;
 
 /* 
+   REGRA 10
+   <lista de identificadores> ::= 
+      <identificador> {, <identificador>} 
+*/
+lista_idents: lista_idents 
+              VIRGULA  // mais que um identificador separados por virgula
+              ident_params 
+            | ident_params // apenas um identificador
+;
+
+ident_params: IDENT 
+              {
+               strcpy(idents[num_params], token);
+               lista_parametros[num_params].passagem = referencia? parametro_ref : parametro_copia;
+               num_params++;  // incrementa numero de parametros conforme a lista de identificados
+               curr_section_params++;    
+              }
+;
+
+
+/* 
    REGRA 11
    <parte de declarações de sub-rotinas> ::=
     {<declaração de procedimento>; |
     <declaração de função> ;} 
 */
-parte_declara_subrotinas: parte_declara_subrotinas declara_proc {nr_procs_for_curr_proc++;} 
-                          | parte_declara_subrotinas declara_func 
+parte_declara_subrotinas: 
+                           parte_declara_subrotinas declara_proc {nr_procs_for_curr_proc++;} PONTO_E_VIRGULA
+                          | parte_declara_subrotinas declara_func PONTO_E_VIRGULA
                           |
 ;
 
@@ -280,7 +283,6 @@ declara_proc: PROCEDURE
                pilha_int_desempilhar(&pilha_procs);
                geraCodigo(NULL, mepa_buf);
               }
-              PONTO_E_VIRGULA
 ;
 
  /* 
@@ -341,7 +343,6 @@ declara_func: FUNCTION
                pilha_int_desempilhar(&pilha_procs);
                geraCodigo(NULL, mepa_buf);
               }
-              PONTO_E_VIRGULA
 ;
 
 /* 
@@ -357,7 +358,7 @@ parametros_formais: ABRE_PARENTESES
                     FECHA_PARENTESES
 ;
 
-parametros: parametros PONTO_E_VIRGULA secao_parametros | secao_parametros
+parametros: parametros PONTO_E_VIRGULA secao_parametros_formais | secao_parametros_formais
 ;
 
 /* 
@@ -368,7 +369,7 @@ parametros: parametros PONTO_E_VIRGULA secao_parametros | secao_parametros
       procedure <lista de identificadores> 
 */
 
-secao_parametros : var__ou_vazio
+secao_parametros_formais : var__ou_vazio
                    {curr_section_params = 0;}
                    lista_idents 
                    DOIS_PONTOS 
@@ -383,6 +384,7 @@ secao_parametros : var__ou_vazio
                    }                   
 ;
 
+/* lembrando que no pascal, caso seja VAR nome_variavel eh por referencia, senao copia */
 var__ou_vazio: VAR {referencia = 1;} | {referencia = 0;} ;
 
 /* 
@@ -416,35 +418,19 @@ comando_sem_rotulo:
                   | comando_repetitivo 
                   | escrita
                   | leitura
-                  |
 ;
 
-
-
-atribuicao_proc:  IDENT 
-                  { 
-                     // printf("Buscando o token %s\n", token);
-                     sptr_var_proc = busca(&ts, token); 
-                     // printf("Variavel %s tem deslocamento %d\n", sptr_var_proc->identificador, sptr_var_proc->conteudo.var.deslocamento);
-                     pilha_simb_ptr_empilhar(&pilha_ident_esquerdo, sptr_var_proc);
-                  } 
-                  a_continua
-                  { 
-                     pilha_simb_ptr_desempilhar(&pilha_ident_esquerdo);
-                  };
-
-a_continua: ATRIBUICAO {atribui = 1;}atribuicao {atribui = 0;}|
-            procedimento_sem_parametro |
-            procedimento;
 
 /*
    REGRA 19
     <atribuição> ::=
     <variável>:= <expressão> 
 */
-atribuicao: expressao {
+atribuicao: 
+   expressao {
    sptr_var_proc = pilha_simb_ptr_topo(&pilha_ident_esquerdo);
-   if(sptr_var_proc->conteudo.var.tipo != $1){
+   // verifica se o tipo da variavel eh compativel com a expressao
+   if(sptr_var_proc->conteudo.var.tipo != $1){ 
       fprintf(stderr, "COMPILATION ERROR!!!\n Variable type differs from expression type.\n"); 
       exit(1);
    }
@@ -468,6 +454,23 @@ atribuicao: expressao {
    geraCodigo(NULL, mepa_buf);
 }
 ;
+
+atribuicao_proc:  IDENT 
+                  { 
+                     // printf("Buscando o token %s\n", token);
+                     sptr_var_proc = busca(&ts, token); 
+                     // printf("Variavel %s tem deslocamento %d\n", sptr_var_proc->identificador, sptr_var_proc->conteudo.var.deslocamento);
+                     pilha_simb_ptr_empilhar(&pilha_ident_esquerdo, sptr_var_proc);
+                  } 
+                  a_continua
+                  { 
+                     pilha_simb_ptr_desempilhar(&pilha_ident_esquerdo);
+                  };
+
+a_continua: ATRIBUICAO {atribui = 1;} atribuicao {atribui = 0;} |
+            procedimento_sem_parametro |
+            procedimento;
+
 
 /* 
    REGRA 20
@@ -549,17 +552,25 @@ comando_condicional: IF expressao {
                         geraCodigo(rot_str, "NADA");
 
                      } 
-                     else__ou_vazio{
+                     /* else__ou_vazio */
+                     ELSE comando_sem_rotulo
+                     {
                         sprintf(rot_str, "R%02d", pilha_int_topo(&pilha_rotulos));
                         geraCodigo(rot_str, "NADA");
 
                         pilha_int_desempilhar(&pilha_rotulos);
-                     }
+                     }  
 ;
 
-else__ou_vazio: ELSE comando_sem_rotulo 
+/* else__ou_vazio: ELSE comando_sem_rotulo
+{
+                        sprintf(rot_str, "R%02d", pilha_int_topo(&pilha_rotulos));
+                        geraCodigo(rot_str, "NADA");
+
+                        pilha_int_desempilhar(&pilha_rotulos);
+                     } 
             | %prec LOWER_THEN_ELSE
-;
+; */
 
 /* 
    REGRA 23
@@ -590,11 +601,11 @@ comando_repetitivo:  WHILE {
 ;
 
 
-/*
-   REGRA 25
-   <expressão> ::=
-      <expressão simples>[<relação><expressão simples>] */
-
+/* 
+   Regra 24
+   <lista de expressões> ::= 
+    <expressão> {, <expressão>} 
+*/
 lista_expressoes:  expressao
                   {  
                      // curr_section_params++;
@@ -608,8 +619,14 @@ lista_expressoes:  expressao
                      curr_call_params++;
                   };
 
+/*
+   REGRA 25
+   <expressão> ::=
+      <expressão simples>[<relação><expressão simples>] 
+*/
 expressao   : expressao_simples { $$ = $1; } 
             | expressao_simples relacao expressao_simples{
+               // verifica se o tipos das variaveis a serem comparadas sao compativeis
                if ($1 != $3){
                   fprintf(stderr, "COMPILATION ERROR!!!\nCannot compare expressions with different types!\n");
                   exit(1);
@@ -638,6 +655,7 @@ relacao  : IGUAL        { $$ = "CMIG"; }
 */
 expressao_simples : expressao_simples mais_menos_or termo {
                      if (strcmp($2, "DISJ") == 0){
+                        // caso seja uma disjuncao verifica se ambos os tipos sao booleanos
                         if ($1 != pas_boolean || $3 != pas_boolean){
                            fprintf(stderr, "COMPILATION ERROR!!!\n Boolean operation with non-boolean operands!\n");
                            exit(1);
@@ -686,6 +704,7 @@ REGRA 28
       <fator> {(*|div|and) <fator>} */
 termo : termo vezes_div_and fator { 
          if (strcmp($2, "CONJ") == 0){
+            // caso seja uma conjuncao verificamos se ambos os tipos sao booleanos
             if ($1 != pas_boolean || $3 != pas_boolean){
                fprintf(stderr, "COMPILATION ERROR!!!\n Boolean operation with non-boolean operands!\n");
                exit(1);
@@ -709,14 +728,7 @@ vezes_div_and  : VEZES { $$ = strdup("MULT"); }
                | AND { $$ = strdup("CONJ"); }
 ;
 
-/* 
-   REGRA 29 -- TODO VERIFICAR
-   <fator>::=
-    <variável>
-    |<número>
-    |<chamada de função>
-    |(<expressão>)
-    |not <fator> */
+
 procedimento__ou_vazio: procedimento {
                         sptr_var_proc = pilha_simb_ptr_topo(&pilha_ident_esquerdo);
                         pilha_simb_ptr_desempilhar(&pilha_ident_esquerdo);
@@ -725,13 +737,22 @@ procedimento__ou_vazio: procedimento {
                         sptr = pilha_simb_ptr_topo(&pilha_ident_esquerdo); 
                         pilha_simb_ptr_desempilhar(&pilha_ident_esquerdo); 
                      };
-
+/* 
+   REGRA 29 -- TODO VERIFICAR
+   <fator>::=
+    <variável>
+    |<número>
+    |<chamada de função>
+    |(<expressão>)
+    |not <fator> 
+*/
 fator : IDENT /// TODO VERIFICAR
          {
             sptr = busca(&ts, token);
             pilha_simb_ptr_empilhar(&pilha_ident_esquerdo, busca(&ts, token));
 
-         } procedimento__ou_vazio { 
+         } 
+         procedimento__ou_vazio { 
 
          if(!sptr){
             printf("Variável não encontrada\n");

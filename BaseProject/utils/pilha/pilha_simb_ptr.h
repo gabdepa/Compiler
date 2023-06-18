@@ -5,9 +5,9 @@
 #define PILHA_MAX_TAM_STRING 32
 
 struct pilha_simb_ptr {
-    struct simbolo **p;
     unsigned int tam;
     unsigned int topo;
+    struct simbolo **p;
 };
 
 void pilha_simb_ptr_inicializar(struct pilha_simb_ptr *p);
