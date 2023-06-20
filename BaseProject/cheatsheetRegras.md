@@ -1,7 +1,7 @@
-V1. <programa> ::=
+1. <programa> ::=
 program <identificador> (<lista de identificadores>);      
     <bloco>.
-V2. <bloco> ::=
+2. <bloco> ::=
     [<parte de declarações de rótulos>] 
     [<parte de definições de tipos>]
     [<parte de declarações de variáveis>]
@@ -23,30 +23,30 @@ V2. <bloco> ::=
 
 7. <índice> ::= <número>.. <número>
 
-V8. <parte de declarações de variáveis> ::= 
+8. <parte de declarações de variáveis> ::= 
     var <declaração de variáveis>
         {; <declaração de variáveis>};
 
-V9. <declaração de variáveis> ::=
+9. <declaração de variáveis> ::=
     <lista de identificadores> : <tipo>
 
-V10. <lista de identificadores> ::=
+10. <lista de identificadores> ::=
     <identificador> {, <identificador>} 
 
-V11. <parte de declarações de sub-rotinas> ::=
+11. <parte de declarações de sub-rotinas> ::=
     {<declaração de procedimento>; |
     <declaração de função> ;}
 
-V12. <declaração de procedimento> ::=
+12. <declaração de procedimento> ::=
     procedure <identificador>
         [<parâmetros formais>]: <bloco>
 
-V13. <declaração de função> ::=
+13. <declaração de função> ::=
     function <identificador>
         [<parâmetros formais>]: <identificador> ;
          <bloco>
 
-V14. <parâmetros formais> ::=
+14. <parâmetros formais> ::=
     (<seção de parâmetros formais> 
     {: <seção de parâmetros formais>})
 
@@ -55,7 +55,7 @@ V14. <parâmetros formais> ::=
    | function <lista de identificadores>:<identificador
    | procedure <lista de identificadores>
 
-V16. <comando composto> ::=
+16. <comando composto> ::=
     begin <comando>{;<comando>} end 
 
 17. <comando> ::=
@@ -115,10 +115,13 @@ V16. <comando composto> ::=
 32. <número> ::=
     <dígito>{<dígito>}
 
+
+
+/// regras que nao fizemos : desnecessarias ?
 33. <dígito> ::=
     0|1|2|3|4|5|6|7|8|9
 
-34. <identificador> ::=
+34. <identificador> ::= 
     <letra> { <letra> | <dígito>}
 
 35. <letra> ::=

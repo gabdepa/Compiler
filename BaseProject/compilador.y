@@ -39,7 +39,7 @@ struct parametro lista_parametros[128];
 struct cat_conteudo ti;
 
 
-int str2type(const char *str){
+int str2token(const char *str){
    if (!strcmp(str, "integer")) return pas_integer;
    if (!strcmp(str, "boolean")) return pas_boolean;
    return undefined_type;
@@ -68,12 +68,13 @@ int rot_w;
    struct simbolo *simb;
 }
 
-/* %type <simb> variavel; // atribui o tipo str a regra variavel */
+%type <int_val> variavel; // atribui o tipo str a regra variavel
 %type <str> mais_menos_or; // numa expressão
 %type <str> mais_menos_vazio; // antes de um fator
 %type <str> vezes_div_and;
 %type <str> relacao;
 %type <int_val> expressao;
+%type <int_val> numero; 
 %type <int_val> expressao_simples;
 %type <int_val> fator;
 %type <int_val> termo;
@@ -149,7 +150,7 @@ bloco       :
     <identificador>|
     array [<índice> {, <índice>}] of <tipo> 
 */
-tipo        : TIPO { $$ = str2type(token); }
+tipo        : TIPO { $$ = str2token(token); } // converte o token de tipo recebido e retorna
 ;
 
 /* 
@@ -164,7 +165,7 @@ parte_declara_vars: { num_vars = 0; } // inicializacao do num_vars como 0
                geraCodigo(NULL, mepa_buf);
 
                pilha_int_empilhar(&pilha_amem, num_vars);
-               }
+            }
             | {pilha_int_empilhar(&pilha_amem, 0);}
 ;
 
@@ -203,13 +204,15 @@ lista_id_var: lista_id_var VIRGULA IDENT {
    <lista de identificadores> ::= 
       <identificador> {, <identificador>} 
 */
-lista_idents: lista_idents 
+lista_idents: 
+              lista_idents 
               VIRGULA  // mais que um identificador separados por virgula
               ident_params 
             | ident_params // apenas um identificador
 ;
 
-ident_params: IDENT 
+ident_params: 
+              IDENT 
               {
                strcpy(idents[num_params], token);
                lista_parametros[num_params].passagem = referencia? parametro_ref : parametro_copia;
@@ -228,7 +231,7 @@ ident_params: IDENT
 parte_declara_subrotinas: 
                            parte_declara_subrotinas declara_proc {nr_procs_for_curr_proc++;} PONTO_E_VIRGULA
                           | parte_declara_subrotinas declara_func PONTO_E_VIRGULA
-                          |
+                          | comando_vazio
 ;
 
 /*
@@ -242,7 +245,7 @@ declara_proc: PROCEDURE
                strcpy(proc_name, token);
                num_params = 0;
               }
-              parametros_formais__ou_vazio
+              parametros_formais_ou_vazio
               {
                sprintf(rot_str, "R%02d", rot_num);
                sprintf(mepa_buf, "ENPR %d", nivel_lex);
@@ -299,7 +302,7 @@ declara_func: FUNCTION
                strcpy(proc_name, token);
                num_params = 0;
               }
-              parametros_formais__ou_vazio
+              parametros_formais_ou_vazio
               
               DOIS_PONTOS
               tipo
@@ -350,7 +353,7 @@ declara_func: FUNCTION
    <parâmetros formais> ::=
     (<seção de parâmetros formais> 
     {: <seção de parâmetros formais>}) */
-parametros_formais__ou_vazio: parametros_formais | ;
+parametros_formais_ou_vazio: parametros_formais | ;
 
 
 parametros_formais: ABRE_PARENTESES
@@ -369,7 +372,7 @@ parametros: parametros PONTO_E_VIRGULA secao_parametros_formais | secao_parametr
       procedure <lista de identificadores> 
 */
 
-secao_parametros_formais : var__ou_vazio
+secao_parametros_formais : var_ou_vazio
                    {curr_section_params = 0;}
                    lista_idents 
                    DOIS_PONTOS 
@@ -385,7 +388,7 @@ secao_parametros_formais : var__ou_vazio
 ;
 
 /* lembrando que no pascal, caso seja VAR nome_variavel eh por referencia, senao copia */
-var__ou_vazio: VAR {referencia = 1;} | {referencia = 0;} ;
+var_ou_vazio: VAR {referencia = 1;} | {referencia = 0;} ;
 
 /* 
    REGRA 16
@@ -400,6 +403,7 @@ comando_composto: T_BEGIN comandos T_END
    <comando> ::=
     [<número>:]<comando sem rótulo> */
 comandos: comando_sem_rotulo | comandos PONTO_E_VIRGULA comando_sem_rotulo;
+comando_vazio:;
 
 /* 
    REGRA 18
@@ -426,35 +430,6 @@ comando_sem_rotulo:
     <atribuição> ::=
     <variável>:= <expressão> 
 */
-atribuicao: 
-   expressao {
-   sptr_var_proc = pilha_simb_ptr_topo(&pilha_ident_esquerdo);
-   // verifica se o tipo da variavel eh compativel com a expressao
-   if(sptr_var_proc->conteudo.var.tipo != $1){ 
-      fprintf(stderr, "COMPILATION ERROR!!!\n Variable type differs from expression type.\n"); 
-      exit(1);
-   }
-   /* busca posição da variavel */
-   
-   // pode ser indireto
-   // printf("%s: %d", sptr_var_proc->identificador, sptr_var_proc->categoria);
-   if (sptr_var_proc->categoria == variavel)
-      sprintf(mepa_buf, "ARMZ %d, %d", sptr_var_proc->nivel, sptr_var_proc->conteudo.var.deslocamento);
-   else if (sptr_var_proc->categoria == parametro){
-      if (sptr_var_proc->conteudo.param.passagem == parametro_copia)
-         sprintf(mepa_buf, "ARMZ %d, %d", sptr_var_proc->nivel, sptr_var_proc->conteudo.param.deslocamento);
-      else
-         sprintf(mepa_buf, "ARMI %d, %d", sptr_var_proc->nivel, sptr_var_proc->conteudo.param.deslocamento);
-   } else if (sptr_var_proc->categoria == funcao){
-         sprintf(mepa_buf, "ARMZ %d, %d", sptr_var_proc->nivel, sptr_var_proc->conteudo.var.deslocamento);
-   } else {
-      fprintf(stderr, "Procedimento tratado como variável!\n");
-      exit(1);
-   }
-   geraCodigo(NULL, mepa_buf);
-}
-;
-
 atribuicao_proc:  IDENT 
                   { 
                      // printf("Buscando o token %s\n", token);
@@ -471,6 +446,35 @@ a_continua: ATRIBUICAO {atribui = 1;} atribuicao {atribui = 0;} |
             procedimento_sem_parametro |
             procedimento;
 
+atribuicao: 
+   expressao {
+   sptr_var_proc = pilha_simb_ptr_topo(&pilha_ident_esquerdo);
+   // verifica se o tipo da variavel eh compativel com a expressao
+   if(sptr_var_proc->conteudo.var.tipo != $1){ 
+      fprintf(stderr, "ERRO:\n Variable type differs from expression type.\n"); 
+      exit(1);
+   }
+   /* busca posição da variavel */
+   
+   // pode ser indireto
+   // printf("%s: %d", sptr_var_proc->identificador, sptr_var_proc->categoria);
+   if (sptr_var_proc->categoria == variavel)
+      sprintf(mepa_buf, "ARMZ %d, %d", sptr_var_proc->nivel, sptr_var_proc->conteudo.var.deslocamento);
+   else if (sptr_var_proc->categoria == parametro){
+      if (sptr_var_proc->conteudo.param.passagem == parametro_copia)
+         sprintf(mepa_buf, "ARMZ %d, %d", sptr_var_proc->nivel, sptr_var_proc->conteudo.param.deslocamento);
+      else
+         sprintf(mepa_buf, "ARMI %d, %d", sptr_var_proc->nivel, sptr_var_proc->conteudo.param.deslocamento);
+   } else if (sptr_var_proc->categoria == funcao){
+         sprintf(mepa_buf, "ARMZ %d, %d", sptr_var_proc->nivel, sptr_var_proc->conteudo.var.deslocamento);
+   } else {
+      fprintf(stderr, "ERRO: Procedimento tratado como variável!\n");
+      exit(1);
+   }
+   geraCodigo(NULL, mepa_buf);
+}
+;
+
 
 /* 
    REGRA 20
@@ -482,14 +486,19 @@ procedimento:
                sptr_var_proc = pilha_simb_ptr_topo(&pilha_ident_esquerdo);
 
               if(!sptr_var_proc){
-                  fprintf(stderr, "COMPILATION ERROR!!!\n Procedure not found.\n"); 
+                  fprintf(stderr, "ERRO:\n Procedimento não encontrado.\n"); 
                   exit(1);
               }
               sptr_atribuicao = sptr_var_proc;
               memcpy(&curr_proc, sptr_var_proc, sizeof(struct simbolo));
-            //   printf("curr_proc.categoria = %d\n", curr_proc.categoria);
-            //   printf("fun: %d\n", funcao);
-            //   printf("proc: %d\n", procedimento);
+             
+              #ifdef DEBUG
+             
+              printf("curr_proc.categoria = %d\n", curr_proc.categoria);
+              printf("fun: %d\n", funcao);
+              printf("proc: %d\n", procedimento);
+
+              #endif  
               if(curr_proc.categoria == funcao ){
                   geraCodigo(NULL, "AMEM 1");
               }
@@ -505,7 +514,7 @@ procedimento:
              {
                dentro_chamada_proc--;
                if(curr_call_params != curr_proc.conteudo.proc.qtd_parametros){
-                   fprintf(stderr, "COMPILATION ERROR!!!\n Wrong number of parameters.\n"); 
+                   fprintf(stderr, "ERRO:\n Quantidade incorreta de parametros esperado %d recebido %d.\n",curr_proc.conteudo.proc.qtd_parametros,curr_call_params); 
                    exit(1);
                }
                geraCodigo(NULL, proc_name);
@@ -516,7 +525,7 @@ procedimento_sem_parametro:
               {
                sptr_var_proc = pilha_simb_ptr_topo(&pilha_ident_esquerdo);
                if(!sptr_var_proc){
-                  fprintf(stderr, "COMPILATION ERROR!!!\n Procedure not found.\n"); 
+                  fprintf(stderr, "ERRO:\n Procedimento não encontrado.\n"); 
                   exit(1);
                }
                sprintf(mepa_buf, "CHPR R%02d, %d", sptr_var_proc->conteudo.proc.rotulo, nivel_lex);
@@ -533,7 +542,7 @@ procedimento_sem_parametro:
 
 comando_condicional: IF expressao {
                         if ($2 != pas_boolean){
-                           fprintf(stderr, "COMPILATION ERROR!!!\n If expression is not boolean!\n");
+                           fprintf(stderr, "ERRO:\n Expressão do If não é booleana!\n");
                            exit(1);
                         }
 
@@ -552,7 +561,6 @@ comando_condicional: IF expressao {
                         geraCodigo(rot_str, "NADA");
 
                      } 
-                     /* else__ou_vazio */
                      ELSE comando_sem_rotulo
                      {
                         sprintf(rot_str, "R%02d", pilha_int_topo(&pilha_rotulos));
@@ -562,7 +570,7 @@ comando_condicional: IF expressao {
                      }  
 ;
 
-/* else__ou_vazio: ELSE comando_sem_rotulo
+/* else_ou_vazio: ELSE comando_sem_rotulo
 {
                         sprintf(rot_str, "R%02d", pilha_int_topo(&pilha_rotulos));
                         geraCodigo(rot_str, "NADA");
@@ -628,7 +636,7 @@ expressao   : expressao_simples { $$ = $1; }
             | expressao_simples relacao expressao_simples{
                // verifica se o tipos das variaveis a serem comparadas sao compativeis
                if ($1 != $3){
-                  fprintf(stderr, "COMPILATION ERROR!!!\nCannot compare expressions with different types!\n");
+                  fprintf(stderr, "ERRO:\n Comparação entre expressões de tipos diferentes!\n");
                   exit(1);
                }
                geraCodigo(NULL, $2);
@@ -657,14 +665,14 @@ expressao_simples : expressao_simples mais_menos_or termo {
                      if (strcmp($2, "DISJ") == 0){
                         // caso seja uma disjuncao verifica se ambos os tipos sao booleanos
                         if ($1 != pas_boolean || $3 != pas_boolean){
-                           fprintf(stderr, "COMPILATION ERROR!!!\n Boolean operation with non-boolean operands!\n");
+                           fprintf(stderr, "ERRO:\n Operação booleana entre operandos não booleanos!\n");
                            exit(1);
                         }
                         $$ = pas_boolean;
                      }
                      else {
                         if ($1 != pas_integer || $3 != pas_integer){
-                           fprintf(stderr, "COMPILATION ERROR!!!\n Integer operation with non-integer operands!\n");
+                           fprintf(stderr, "ERRO:\n Operação de inteiros com operandos não inteiros!\n");
                            exit(1);
                         }
                         $$ = pas_integer;
@@ -675,7 +683,7 @@ expressao_simples : expressao_simples mais_menos_or termo {
                   | mais_menos_vazio termo{
                      if ( strcmp($1, "VAZIO") != 0){
                         if ($2 != pas_integer){
-                           fprintf(stderr, "COMPILATION ERROR!!!\n Sign on non integer type!\n");
+                           fprintf(stderr, "ERRO:\n Sign on non integer type!\n");
                            exit(1);
                         }
                         $$ = pas_integer;
@@ -706,14 +714,14 @@ termo : termo vezes_div_and fator {
          if (strcmp($2, "CONJ") == 0){
             // caso seja uma conjuncao verificamos se ambos os tipos sao booleanos
             if ($1 != pas_boolean || $3 != pas_boolean){
-               fprintf(stderr, "COMPILATION ERROR!!!\n Boolean operation with non-boolean operands!\n");
+               fprintf(stderr, "ERRO:\n Operação booleana entre operandos não booleanos!\n");
                exit(1);
             }
             $$ = pas_boolean;
          }
          else {
             if ($1 != pas_integer || $3 != pas_integer){
-               fprintf(stderr, "COMPILATION ERROR!!!\n Integer operation with non-integer operands!\n");
+               fprintf(stderr, "ERRO:\n Operação de inteiros com operandos não inteiros!\n");
                exit(1);
             }
             $$ = pas_integer;
@@ -729,11 +737,11 @@ vezes_div_and  : VEZES { $$ = strdup("MULT"); }
 ;
 
 
-procedimento__ou_vazio: procedimento {
+procedimento_ou_vazio: procedimento {
                         sptr_var_proc = pilha_simb_ptr_topo(&pilha_ident_esquerdo);
                         pilha_simb_ptr_desempilhar(&pilha_ident_esquerdo);
                      }
-                     | {
+                     | comando_vazio {
                         sptr = pilha_simb_ptr_topo(&pilha_ident_esquerdo); 
                         pilha_simb_ptr_desempilhar(&pilha_ident_esquerdo); 
                      };
@@ -746,13 +754,41 @@ procedimento__ou_vazio: procedimento {
     |(<expressão>)
     |not <fator> 
 */
-fator : IDENT /// TODO VERIFICAR
+fator : variavel
+      | numero
+      | VALOR_BOOL {
+         $$ = pas_boolean;
+         if(strcmp(token, "True") == 0)
+            sprintf (mepa_buf, "CRCT %d", 1);
+         else
+            sprintf (mepa_buf, "CRCT %d", 0);
+         geraCodigo(NULL, mepa_buf);
+      }
+      | ABRE_PARENTESES expressao FECHA_PARENTESES { $$ = $2; }
+      | NOT fator {
+         if ($2 != pas_boolean){
+            fprintf(stderr, "ERRO: Operação booleana entre operandos não booleanos!\n");
+            exit(1);
+         }
+         $$ = pas_boolean;
+         geraCodigo(NULL, "NEGA");
+       }
+      /* falta chamada de função */
+      /* | IDENT procedimento {$$ = sptr_var_proc->conteudo.var.tipo;} */
+;
+
+/* 
+   REGRA 30
+   <variável> ::=
+      <identificador>
+      |<identificador> [<lista de expressões>] */
+variavel:   IDENT
          {
             sptr = busca(&ts, token);
             pilha_simb_ptr_empilhar(&pilha_ident_esquerdo, busca(&ts, token));
 
          } 
-         procedimento__ou_vazio { 
+         procedimento_ou_vazio { 
 
          if(!sptr){
             printf("Variável não encontrada\n");
@@ -769,7 +805,7 @@ fator : IDENT /// TODO VERIFICAR
                int qtd_params = sptr_var_proc->conteudo.proc.qtd_parametros;
                // printf("curr: %d actual: %d\n", curr_call_params, qtd_params);
                if (curr_call_params >= qtd_params){
-                  fprintf(stderr, "COMPILATION ERROR! Excesso de parâmetros em função!!\n");
+                  fprintf(stderr, "ERRO: Excesso de parâmetros em chamada de função!\n");
                   exit(1);
                }
                if (sptr_var_proc->conteudo.proc.lista[curr_call_params].passagem == parametro_ref){
@@ -778,7 +814,7 @@ fator : IDENT /// TODO VERIFICAR
                else if (sptr_var_proc->conteudo.proc.lista[curr_call_params].passagem == parametro_copia){
                   sprintf(mepa_buf, "CRVL %d, %d", sptr->nivel, sptr->conteudo.var.deslocamento);
                }else {
-                  fprintf(stderr, "INTERNAL ERROR: parametro não é nem copia nem referencia\n");
+                  fprintf(stderr, "ERRO: INTERNAL ERROR: parametro não é nem copia nem referencia\n");
                   exit(1);
                }
             } else if (sptr_var_proc && sptr_var_proc->categoria != funcao){
@@ -802,58 +838,34 @@ fator : IDENT /// TODO VERIFICAR
                }
             }
          } else if (sptr->categoria != funcao){
-            fprintf(stderr, "Procedimento tratado como variável!!\n");
+            fprintf(stderr, "ERRO: Procedimento tratado como variável!!\n");
             exit(1);
          } else {
             flag = 1;
          }
          if(!flag)
             geraCodigo(NULL, mepa_buf);
-      } 
-      | NUMERO {
+      }; 
+
+/*  ADICIONAR REGRA NUMERO */
+
+numero: NUMERO {
          $$ = pas_integer;
          sprintf (mepa_buf, "CRCT %d", atoi(token));
          geraCodigo(NULL, mepa_buf);
       }
-      | VALOR_BOOL {
-         $$ = pas_boolean;
-         if(strcmp(token, "True") == 0)
-            sprintf (mepa_buf, "CRCT %d", 1);
-         else
-            sprintf (mepa_buf, "CRCT %d", 0);
-         geraCodigo(NULL, mepa_buf);
-      }
-      | ABRE_PARENTESES expressao FECHA_PARENTESES { $$ = $2; }
-      | NOT fator {
-         if ($2 != pas_boolean){
-            fprintf(stderr, "COMPILATION ERROR!!! Boolean operation with non-boolean value!\n");
-            exit(1);
-         }
-         $$ = pas_boolean;
-         geraCodigo(NULL, "NEGA");
-       }
-         /* falta chamada de função */
-      /* | IDENT procedimento {$$ = sptr_var_proc->conteudo.var.tipo;} */
-;
-
-// ========== REGRA 30 ========== //
-/* variavel:   IDENT { sptr = busca(&ts, token);} 
-                  | IDENT { sptr = busca(&ts, token);}procedimento ; */
-
-/*  ADICIONAR REGRA NUMERO */
 
 /////// regras sem regras
 leitura : READ ABRE_PARENTESES leitura_itens FECHA_PARENTESES;
 
-leitura_itens: leitura_itens VIRGULA item_leitura | item_leitura
-;
+leitura_itens: leitura_itens VIRGULA item_leitura | item_leitura;
 
 item_leitura: IDENT
                {
                   geraCodigo(NULL, "LEIT");
                   sptr = busca(&ts, token);
                   if(!sptr || sptr->categoria == procedimento){
-                     fprintf(stderr, "COMPILATION ERROR!!!\n Wrong use of read()\n"); 
+                     fprintf(stderr, "ERRO:\n Wrong use of read()\n"); 
                      exit(1);
                   }
                   sprintf(mepa_buf, "ARMZ %d, %d", sptr->nivel, sptr->conteudo.var.deslocamento);
