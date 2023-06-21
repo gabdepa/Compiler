@@ -141,7 +141,6 @@ bloco       :
                geraCodigo(NULL, mepa_buf);
                pilha_int_desempilhar(&pilha_amem);
               }
-
 ;
 
 /* 
