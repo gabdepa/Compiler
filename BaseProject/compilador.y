@@ -12,7 +12,7 @@
 #include <string.h>
 #include "compilador.h"
 #include "utils/tabela_simb.h"
-#include "utils/pilha_int.h"
+#include "utils/pilha_rotulos.h"
 #include "utils/pilha_simb_ptr.h"
 
 int num_vars;
@@ -32,16 +32,15 @@ int atribui;
 char mepa_buf[128], proc_name[128], idents[128][128];
 tabela_de_simbolos_t *ts, *pilha_atribuicao;
 simbolo_t s, *sptr, *sptr_var_proc, *sptr_chamada_proc, *sptr_atribuicao, curr_proc, lista_simbolos[128];
-struct pilha_int pilha_rotulos, pilha_amem, pilha_procs;
+struct pilha_rotulos pilha_rotulos, pilha_amem, pilha_procs;
 struct pilha_simb_ptr pilha_ident_esquerdo;
 struct parametro lista_parametros[128];
 struct cat_conteudo ti;
 
-
 int str2token(const char *str){
-   if (!strcmp(str, "integer")) return pas_integer;
-   if (!strcmp(str, "boolean")) return pas_boolean;
-   return undefined_type;
+   if (!strcmp(str, "integer")) return INTEGER_S;
+   if (!strcmp(str, "boolean")) return BOOLEAN_S;
+   return UNDEFINED_S;
 }
 short int rot_num;
 char rot_str[4];
@@ -118,7 +117,7 @@ bloco       :
               {
                sprintf(mepa_buf, "DSVS R%02d", rot_num);
                geraCodigo(NULL, mepa_buf);
-               pilha_int_empilhar(&pilha_rotulos, rot_num);
+               pilha_rotulos_empilhar(&pilha_rotulos, rot_num);
                rot_num++;
 
                nivel_lex++;
@@ -126,19 +125,19 @@ bloco       :
               }
               parte_declara_subrotinas
               {
-               pilha_int_empilhar(&pilha_procs, nr_procs_for_curr_proc);
+               pilha_rotulos_empilhar(&pilha_procs, nr_procs_for_curr_proc);
                nivel_lex--;
 
-               sprintf(rot_str, "R%02d", pilha_int_topo(&pilha_rotulos));
+               sprintf(rot_str, "R%02d", pilha_rotulos_topo(&pilha_rotulos));
                geraCodigo(rot_str, "NADA");
-               pilha_int_desempilhar(&pilha_rotulos);
+               pilha_rotulos_desempilhar(&pilha_rotulos);
               }
               comando_composto
               {
-               sprintf(mepa_buf, "DMEM %d", pilha_int_topo(&pilha_amem));
-               remove_n(&ts, pilha_int_topo(&pilha_amem));
+               sprintf(mepa_buf, "DMEM %d", pilha_rotulos_topo(&pilha_amem)); 
+               remove_n(&ts, pilha_rotulos_topo(&pilha_amem));
                geraCodigo(NULL, mepa_buf);
-               pilha_int_desempilhar(&pilha_amem);
+               pilha_rotulos_desempilhar(&pilha_amem);
               }
 ;
 
@@ -162,9 +161,9 @@ parte_declara_vars: { num_vars = 0; } // inicializacao do num_vars como 0
                sprintf(mepa_buf, "AMEM %d", num_vars);
                geraCodigo(NULL, mepa_buf);
 
-               pilha_int_empilhar(&pilha_amem, num_vars);
+               pilha_rotulos_empilhar(&pilha_amem, num_vars);
             }
-            | {pilha_int_empilhar(&pilha_amem, 0);}
+            | {pilha_rotulos_empilhar(&pilha_amem, 0);}
 ;
 
 
@@ -213,7 +212,7 @@ ident_params:
               IDENT 
               {
                strcpy(idents[num_params], token);
-               lista_parametros[num_params].passagem = referencia? parametro_ref : parametro_copia;
+               lista_parametros[num_params].passagem = referencia? PARAMETRO_REF_S : PARAMETRO_COPIA_S;
                num_params++;  // incrementa numero de parametros conforme a lista de identificados
                curr_section_params++;    
               }
@@ -264,24 +263,23 @@ declara_proc: PROCEDURE
 
                // atribui o deslocamento correto e coloca na pilha os símbolos
                for(int i = num_params-1; i >= 0; --i){
-                  lista_simbolos[i].conteudo.param.deslocamento = -4 + (i - (num_params-1)); 
-                  printf(">>>>>>>>> Parametro %s tem deslocamento %d\n", lista_simbolos[i].identificador, lista_simbolos[i].conteudo.param.deslocamento);
+                  lista_simbolos[i].conteudo.param.deslocamento = -TAM_INT + (i - (num_params-1)); 
+                  // printf(">>>>>>>>> Parametro %s tem deslocamento %d\n", lista_simbolos[i].identificador, lista_simbolos[i].conteudo.param.deslocamento);
                   push(&ts, lista_simbolos[i]);
                }
                rot_num++; // para o desvio de procedures dentro dessa procedure
-               pilha_int_empilhar(&pilha_amem, num_params);
-
-               // dentro_proc = 1;
+		         // Adiciona rotulos na pilha
+               pilha_rotulos_empilhar(&pilha_amem, num_params);
               }
 
               PONTO_E_VIRGULA 
               bloco 
               {
-               remove_n(&ts, pilha_int_topo(&pilha_amem));
-               sprintf(mepa_buf, "RTPR %d, %d", nivel_lex, pilha_int_topo(&pilha_amem));
-               pilha_int_desempilhar(&pilha_amem);
-               remove_n(&ts, pilha_int_topo(&pilha_procs));
-               pilha_int_desempilhar(&pilha_procs);
+               remove_n(&ts, pilha_rotulos_topo(&pilha_amem)); 
+               sprintf(mepa_buf, "RTPR %d, %d", nivel_lex, pilha_rotulos_topo(&pilha_amem));
+               pilha_rotulos_desempilhar(&pilha_amem);
+               remove_n(&ts, pilha_rotulos_topo(&pilha_procs));
+               pilha_rotulos_desempilhar(&pilha_procs);
                geraCodigo(NULL, mepa_buf);
               }
 ;
@@ -318,30 +316,28 @@ declara_func: FUNCTION
                //    printf("proc.lista[%d] tem tipo %d e passado por %d \n", i, ti.proc.lista[i].tipo, ti.proc.lista[i].passagem);
                // }
                ti.var.tipo = $6;
-               ti.var.deslocamento = -4 - num_params;
+               ti.var.deslocamento = -TAM_INT - num_params;
                s = cria_simbolo(proc_name, FUNCAO_S, nivel_lex, ti);
                push(&ts, s);
 
                // atribui o deslocamento correto e coloca na pilha os símbolos
                for(int i = num_params-1; i >= 0; --i){
-                  lista_simbolos[i].conteudo.param.deslocamento = -4 + (i - (num_params-1)); 
+                  lista_simbolos[i].conteudo.param.deslocamento = -TAM_INT + (i - (num_params-1)); 
                   push(&ts, lista_simbolos[i]);
                }
                rot_num++; // para o desvio de procedures dentro dessa procedure
-               pilha_int_empilhar(&pilha_amem, num_params);
-
-               // dentro_proc = 1;
+               pilha_rotulos_empilhar(&pilha_amem, num_params);
               }
               PONTO_E_VIRGULA
 
               bloco
               {
-               remove_n(&ts, pilha_int_topo(&pilha_amem));
-               sprintf(mepa_buf, "RTPR %d, %d", nivel_lex, pilha_int_topo(&pilha_amem));
-               pilha_int_desempilhar(&pilha_amem);
+               remove_n(&ts, pilha_rotulos_topo(&pilha_amem));
+               sprintf(mepa_buf, "RTPR %d, %d", nivel_lex, pilha_rotulos_topo(&pilha_amem));
+               pilha_rotulos_desempilhar(&pilha_amem);
 
-               remove_n(&ts, pilha_int_topo(&pilha_procs));
-               pilha_int_desempilhar(&pilha_procs);
+               remove_n(&ts, pilha_rotulos_topo(&pilha_procs));
+               pilha_rotulos_desempilhar(&pilha_procs);
                geraCodigo(NULL, mepa_buf);
               }
 ;
@@ -401,6 +397,7 @@ comando_composto: T_BEGIN comandos T_END
    <comando> ::=
     [<número>:]<comando sem rótulo> */
 comandos: comando_sem_rotulo | comandos PONTO_E_VIRGULA comando_sem_rotulo;
+
 comando_vazio:;
 
 /* 
@@ -452,7 +449,7 @@ atribuicao:
    sptr_var_proc = pilha_simb_ptr_topo(&pilha_ident_esquerdo);
    // verifica se o tipo da variavel eh compativel com a expressao
    if(sptr_var_proc->conteudo.var.tipo != $1){ 
-      fprintf(stderr, "ERRO:\n Variable type differs from expression type.\n"); 
+      fprintf(stderr, "ERRO:\n Tipo da variável é incompatível com o tipo da expressão. %d %d\n",$1,sptr_var_proc->conteudo.var.tipo ); 
       exit(1);
    }
    /* busca posição da variavel */
@@ -462,7 +459,7 @@ atribuicao:
    if (sptr_var_proc->categoria == VARIAVEL_S)
       sprintf(mepa_buf, "ARMZ %d, %d", sptr_var_proc->nivel, sptr_var_proc->conteudo.var.deslocamento);
    else if (sptr_var_proc->categoria == PARAMETRO_S){
-      if (sptr_var_proc->conteudo.param.passagem == parametro_copia)
+      if (sptr_var_proc->conteudo.param.passagem == PARAMETRO_COPIA_S)
          sprintf(mepa_buf, "ARMZ %d, %d", sptr_var_proc->nivel, sptr_var_proc->conteudo.param.deslocamento);
       else
          sprintf(mepa_buf, "ARMI %d, %d", sptr_var_proc->nivel, sptr_var_proc->conteudo.param.deslocamento);
@@ -542,7 +539,7 @@ procedimento_sem_parametro:
 */
 
 comando_condicional: IF expressao {
-                        if ($2 != pas_boolean){
+                        if ($2 != BOOLEAN_S){
                            fprintf(stderr, "ERRO:\n Expressão do If não é booleana!\n");
                            exit(1);
                         }
@@ -550,24 +547,24 @@ comando_condicional: IF expressao {
                         sprintf(mepa_buf, "DSVF R%02d", rot_num+1);
                         geraCodigo(NULL, mepa_buf); // falta testar expressão
 
-                        pilha_int_empilhar(&pilha_rotulos, rot_num);
+                        pilha_rotulos_empilhar(&pilha_rotulos, rot_num);
                         rot_num += 2;
                      }  
                      THEN
                      comando_sem_rotulo {
-                        sprintf(mepa_buf, "DSVS R%02d", pilha_int_topo(&pilha_rotulos));
+                        sprintf(mepa_buf, "DSVS R%02d", pilha_rotulos_topo(&pilha_rotulos));
                         geraCodigo(NULL, mepa_buf);
 
-                        sprintf(rot_str, "R%02d", pilha_int_topo(&pilha_rotulos)+1);
+                        sprintf(rot_str, "R%02d", pilha_rotulos_topo(&pilha_rotulos)+1);
                         geraCodigo(rot_str, "NADA");
 
                      } 
                      ELSE comando_sem_rotulo
                      {
-                        sprintf(rot_str, "R%02d", pilha_int_topo(&pilha_rotulos));
+                        sprintf(rot_str, "R%02d", pilha_rotulos_topo(&pilha_rotulos));
                         geraCodigo(rot_str, "NADA");
 
-                        pilha_int_desempilhar(&pilha_rotulos);
+                        pilha_rotulos_desempilhar(&pilha_rotulos);
                      }  
 ;
 
@@ -577,25 +574,25 @@ comando_condicional: IF expressao {
       while <expressão> do <comando sem rótulo> 
 */
 comando_repetitivo:  WHILE {
-                        pilha_int_empilhar(&pilha_rotulos, rot_num);
+                        pilha_rotulos_empilhar(&pilha_rotulos, rot_num);
                          
                         sprintf(rot_str, "R%02d", rot_num);
                         geraCodigo(rot_str, "NADA");
                         rot_num += 2;
                      }
                      expressao {
-                        sprintf(mepa_buf, "DSVF R%02d", pilha_int_topo(&pilha_rotulos)+1);
-                        geraCodigo(NULL, mepa_buf); // falta testar expressão
+                        sprintf(mepa_buf, "DSVF R%02d", pilha_rotulos_topo(&pilha_rotulos)+1);
+                        geraCodigo(NULL, mepa_buf); 
                      }
                      DO 
                      comando_sem_rotulo {
-                        sprintf(mepa_buf, "DSVS R%02d", pilha_int_topo(&pilha_rotulos));
+                        sprintf(mepa_buf, "DSVS R%02d", pilha_rotulos_topo(&pilha_rotulos));
                         geraCodigo(NULL, mepa_buf);
 
-                        sprintf(rot_str, "R%02d", pilha_int_topo(&pilha_rotulos)+1);
+                        sprintf(rot_str, "R%02d", pilha_rotulos_topo(&pilha_rotulos)+1);
                         geraCodigo(rot_str, "NADA");
 
-                        pilha_int_desempilhar(&pilha_rotulos);
+                        pilha_rotulos_desempilhar(&pilha_rotulos);
                      }
 ;
 
@@ -607,14 +604,12 @@ comando_repetitivo:  WHILE {
 */
 lista_expressoes:  expressao
                   {  
-                     // curr_section_params++;
-                     curr_call_params++;
+                     curr_call_params++;   // conforme a lista de expressoes incrementados a quantidade de parametros da expressao
                   } 
                   VIRGULA 
                   lista_expressoes 
                   | expressao 
                   {
-                     // curr_section_params++;
                      curr_call_params++;
                   };
 
@@ -631,7 +626,7 @@ expressao   : expressao_simples { $$ = $1; }
                   exit(1);
                }
                geraCodigo(NULL, $2);
-               $$ = pas_boolean;
+               $$ = BOOLEAN_S;
             }
 ;
 
@@ -639,7 +634,7 @@ expressao   : expressao_simples { $$ = $1; }
    REGRA 26
    <relação> ::= =|<>|<|<=|>=|> 
 */
-relacao  : IGUAL        { $$ = "CMIG"; }
+relacao  : IGUAL        { $$ = "CMIG"; }  // Retornar o tipo para que quem chamou a regra verifique se pode ser usada essa relacao
          | DIFERENTE    { $$ = "CMDG"; }
          | MENOR        { $$ = "CMME"; }
          | MENOR_IGUAL  { $$ = "CMEG"; }
@@ -655,29 +650,29 @@ relacao  : IGUAL        { $$ = "CMIG"; }
 expressao_simples : expressao_simples mais_menos_or termo {
                      if (strcmp($2, "DISJ") == 0){
                         // caso seja uma disjuncao verifica se ambos os tipos sao booleanos
-                        if ($1 != pas_boolean || $3 != pas_boolean){
+                        if ($1 != BOOLEAN_S || $3 != BOOLEAN_S){
                            fprintf(stderr, "ERRO:\n Operação booleana entre operandos não booleanos!\n");
                            exit(1);
                         }
-                        $$ = pas_boolean;
+                        $$ = BOOLEAN_S;
                      }
                      else {
-                        if ($1 != pas_integer || $3 != pas_integer){
+                        if ($1 != INTEGER_S || $3 != INTEGER_S){
                            fprintf(stderr, "ERRO:\n Operação de inteiros com operandos não inteiros!\n");
                            exit(1);
                         }
-                        $$ = pas_integer;
+                        $$ = INTEGER_S;
                      }
                      
-                     geraCodigo(NULL, $2);
+                     geraCodigo(NULL, $2); // gera codigo DISJ
                   }
                   | mais_menos_vazio termo{
                      if ( strcmp($1, "VAZIO") != 0){
-                        if ($2 != pas_integer){
-                           fprintf(stderr, "ERRO:\n Sign on non integer type!\n");
+                        if ($2 != INTEGER_S){
+                           fprintf(stderr, "ERRO:\n Operação inválida, esperado inteiros.\n");
                            exit(1);
                         }
-                        $$ = pas_integer;
+                        $$ = INTEGER_S;
                      } else {
                         $$ = $2;
                      }
@@ -704,18 +699,18 @@ REGRA 28
 termo : termo vezes_div_and fator { 
          if (strcmp($2, "CONJ") == 0){
             // caso seja uma conjuncao verificamos se ambos os tipos sao booleanos
-            if ($1 != pas_boolean || $3 != pas_boolean){
+            if ($1 != BOOLEAN_S || $3 != BOOLEAN_S){
                fprintf(stderr, "ERRO:\n Operação booleana entre operandos não booleanos!\n");
                exit(1);
             }
-            $$ = pas_boolean;
+            $$ = BOOLEAN_S;
          }
          else {
-            if ($1 != pas_integer || $3 != pas_integer){
+            if ($1 != INTEGER_S || $3 != INTEGER_S){
                fprintf(stderr, "ERRO:\n Operação de inteiros com operandos não inteiros!\n");
                exit(1);
             }
-            $$ = pas_integer;
+            $$ = INTEGER_S;
          }
          geraCodigo(NULL, $2);
       }
@@ -761,18 +756,21 @@ fator : variavel
             
             if (dentro_chamada_proc){
                int qtd_params = sptr_var_proc->conteudo.proc.qtd_parametros;
+               
                // printf("curr: %d actual: %d\n", curr_call_params, qtd_params);
+
+
                if (curr_call_params >= qtd_params){
                   fprintf(stderr, "ERRO: Excesso de parâmetros em chamada de função!\n");
                   exit(1);
                }
-               if (sptr_var_proc->conteudo.proc.lista[curr_call_params].passagem == parametro_ref){
+               if (sptr_var_proc->conteudo.proc.lista[curr_call_params].passagem == PARAMETRO_REF_S){
                   sprintf(mepa_buf, "CREN %d, %d", sptr->nivel, sptr->conteudo.var.deslocamento);
                }
-               else if (sptr_var_proc->conteudo.proc.lista[curr_call_params].passagem == parametro_copia){
+               else if (sptr_var_proc->conteudo.proc.lista[curr_call_params].passagem == PARAMETRO_COPIA_S){
                   sprintf(mepa_buf, "CRVL %d, %d", sptr->nivel, sptr->conteudo.var.deslocamento);
                }else {
-                  fprintf(stderr, "ERRO: INTERNAL ERROR: parametro não é nem copia nem referencia\n");
+                  fprintf(stderr, "ERRO: Parametro não é por copia nem referencia\n");
                   exit(1);
                }
             } else if (sptr_var_proc && sptr_var_proc->categoria != FUNCAO_S){
@@ -786,10 +784,10 @@ fator : variavel
 
          }
          else if (sptr->categoria == PARAMETRO_S){
-            if (sptr->conteudo.param.passagem == parametro_copia)
+            if (sptr->conteudo.param.passagem == PARAMETRO_COPIA_S)
                sprintf(mepa_buf, "CRVL %d, %d", sptr->nivel, sptr->conteudo.param.deslocamento);
             else {
-               if(sptr_var_proc->conteudo.proc.lista[curr_call_params].passagem == parametro_ref){
+               if(sptr_var_proc->conteudo.proc.lista[curr_call_params].passagem == PARAMETRO_REF_S){
                   sprintf(mepa_buf, "CRVL %d, %d", sptr->nivel, sptr->conteudo.param.deslocamento);
                } else {
                   sprintf(mepa_buf, "CRVI %d, %d", sptr->nivel, sptr->conteudo.param.deslocamento);
@@ -806,7 +804,7 @@ fator : variavel
       }; 
       | numero
       | VALOR_BOOL {
-         $$ = pas_boolean;
+         $$ = BOOLEAN_S;
          if(strcmp(token, "True") == 0)
             sprintf (mepa_buf, "CRCT %d", 1);
          else
@@ -815,11 +813,11 @@ fator : variavel
       }
       | ABRE_PARENTESES expressao FECHA_PARENTESES { $$ = $2; }
       | NOT fator {
-         if ($2 != pas_boolean){
+         if ($2 != BOOLEAN_S){
             fprintf(stderr, "ERRO: Operação booleana entre operandos não booleanos!\n");
             exit(1);
          }
-         $$ = pas_boolean;
+         $$ = BOOLEAN_S;
          geraCodigo(NULL, "NEGA");
        }
       /* falta chamada de função */
@@ -838,10 +836,14 @@ variavel:
             pilha_simb_ptr_empilhar(&pilha_ident_esquerdo, busca(&ts, token));
          }; 
 
-/*  ADICIONAR REGRA NUMERO */
+
+/* 
+32. <número> ::=
+    <dígito>{<dígito>} 
+*/
 
 numero: NUMERO {
-         $$ = pas_integer;
+         $$ = INTEGER_S;
          sprintf (mepa_buf, "CRCT %d", atoi(token));
          geraCodigo(NULL, mepa_buf);
       }
@@ -893,17 +895,17 @@ int main (int argc, char** argv) {
  * ------------------------------------------------------------------- */
    inicializa(&ts);
    inicializa(&pilha_atribuicao);
-   pilha_int_inicializar(&pilha_rotulos);
-   pilha_int_inicializar(&pilha_amem);
-   pilha_int_inicializar(&pilha_procs);
+   pilha_rotulos_inicializar(&pilha_rotulos);
+   pilha_rotulos_inicializar(&pilha_amem);
+   pilha_rotulos_inicializar(&pilha_procs);
    pilha_simb_ptr_inicializar(&pilha_ident_esquerdo);
 
    yyin=fp;
    yyparse();
 
-   pilha_int_destruir(&pilha_rotulos);
-   pilha_int_destruir(&pilha_amem);
-   pilha_int_destruir(&pilha_procs);
+   pilha_rotulos_destruir(&pilha_rotulos);
+   pilha_rotulos_destruir(&pilha_amem);
+   pilha_rotulos_destruir(&pilha_procs);
    pilha_simb_ptr_destruir(&pilha_ident_esquerdo);
 
    return 0;

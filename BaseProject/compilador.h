@@ -12,6 +12,8 @@
  * ------------------------------------------------------------------- */
 
 #define TAM_TOKEN 16
+#define TAM_INT 4
+
 
 typedef enum simbolos {
   simb_program, simb_label, simb_type, simb_array,

@@ -12,15 +12,14 @@ typedef enum tipo_simbolo{
 } tipo_simbolo;
 
 typedef enum tipo_variavel{
-    pas_integer,
-    pas_float,
-    pas_boolean,
-    undefined_type
+    INTEGER_S,
+    BOOLEAN_S,
+    UNDEFINED_S
 } tipo_variavel;
 
 typedef enum tipo_passagem{
-    parametro_copia,
-    parametro_ref
+    PARAMETRO_COPIA_S,
+    PARAMETRO_REF_S
 } tipo_passagem;
 
 

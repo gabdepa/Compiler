@@ -2,8 +2,8 @@ $DEPURA=1
 CFLAGS = -lfl -L /usr/lib/x86_64-linux-gnu -ly -lc -g
 DEBUG_FLAGS =-DDEBUG
 
-compilador: lex.yy.c compilador.tab.c compilador.o tabela_simb.o pilha_int.o pilha_simb_ptr.o
-	gcc lex.yy.c compilador.tab.c compilador.o tabela_simb.o pilha_int.o pilha_simb_ptr.o -o compilador $(CFLAGS)
+compilador: lex.yy.c compilador.tab.c compilador.o tabela_simb.o pilha_rotulos.o pilha_simb_ptr.o
+	gcc lex.yy.c compilador.tab.c compilador.o tabela_simb.o pilha_rotulos.o pilha_simb_ptr.o -o compilador $(CFLAGS)
 
 lex.yy.c: compilador.l compilador.h
 	flex compilador.l
@@ -14,8 +14,8 @@ compilador.tab.c: compilador.y compilador.h
 tabela_simb.o: utils/tabela_simb.c utils/tabela_simb.h
 	gcc -c utils/tabela_simb.c -o tabela_simb.o $(CFLAGS)
 
-pilha_int.o: utils/pilha_int.c utils/pilha_int.h
-	gcc -c utils/pilha_int.c -o pilha_int.o $(CFLAGS)
+pilha_rotulos.o: utils/pilha_rotulos.c utils/pilha_rotulos.h
+	gcc -c utils/pilha_rotulos.c -o pilha_rotulos.o $(CFLAGS)
 
 pilha_simb_ptr.o: utils/pilha_simb_ptr.c utils/pilha_simb_ptr.h
 	gcc -c utils/pilha_simb_ptr.c -o pilha_simb_ptr.o $(CFLAGS)
