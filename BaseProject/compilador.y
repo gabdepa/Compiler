@@ -141,7 +141,7 @@ bloco       :
                pilha_int_desempilhar(&pilha_amem);
               }
 
-              ;
+;
 
 /* 
    REGRA 6
