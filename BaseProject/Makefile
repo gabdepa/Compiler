@@ -1,14 +1,5 @@
- # -------------------------------------------------------------------
- #            Arquivo: Makefile
- # -------------------------------------------------------------------
- #              Autor: Bruno Müller Junior
- #               Data: 08/2007
- #      Atualizado em: [09/08/2020, 19h:01m]
- #
- # -------------------------------------------------------------------
-
 $DEPURA=1
-CFLAGS = -Wall -lfl -L /usr/lib/x86_64-linux-gnu -ly -lc -g
+CFLAGS = -lfl -L /usr/lib/x86_64-linux-gnu -ly -lc -g
 DEBUG_FLAGS =-DDEBUG
 
 compilador: lex.yy.c compilador.tab.c compilador.o tabela_simb.o pilha_int.o pilha_simb_ptr.o
@@ -37,3 +28,5 @@ debug : compilador
 
 clean :
 	rm -f compilador.tab.* lex.yy.c *.o compilador
+
+purge: clean
