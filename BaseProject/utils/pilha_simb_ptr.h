@@ -3,18 +3,19 @@
 
 #define PILHA_TAM_INCREMENTO 1024
 #define PILHA_MAX_TAM_STRING 32
+#include "tabela_simb.h"
 
 struct pilha_simb_ptr {
     unsigned int tam;
     unsigned int topo;
-    struct simbolo **p;
+    simbolo_t **p;
 };
 
 void pilha_simb_ptr_inicializar(struct pilha_simb_ptr *p);
 
-void pilha_simb_ptr_empilhar(struct pilha_simb_ptr *p, struct simbolo* num);
+void pilha_simb_ptr_empilhar(struct pilha_simb_ptr *p, simbolo_t* num);
 
-struct simbolo* pilha_simb_ptr_topo(struct pilha_simb_ptr *p);
+simbolo_t* pilha_simb_ptr_topo(struct pilha_simb_ptr *p);
 
 int pilha_simb_ptr_vazia(struct pilha_simb_ptr *p);
 

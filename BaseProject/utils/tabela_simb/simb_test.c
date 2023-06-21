@@ -5,7 +5,7 @@
 #include "simbolo.h"
 
 int main(){
-    struct simbolo var, param, proc;
+    simbolo_t var, param, proc;
     union cat_conteudo conteudo;
 
     // conteudo.var.tipo = 0;
@@ -26,7 +26,7 @@ int main(){
     proc = cria_simbolo("soma", 56, 65, procedimento, conteudo);
 
 
-    struct tabela_de_simbolos *ts;
+    tabela_de_simbolos_t *ts;
     inicializa(&ts);
     printf("Procurando por '%s' antes de inserir\n", proc.identificador);
     if(busca(&ts, proc.identificador)) printf("Achou simbolo\n");
@@ -47,7 +47,7 @@ int main(){
     printf("A tabela agora tem %d simbolos\n", ts->qtd);
 
 
-    // struct simbolo s = pop(&ts);
+    // simbolo_t s = pop(&ts);
     // printf("%s\n", s.identificador);
     // printf("%d\n", ts->qtd);
 

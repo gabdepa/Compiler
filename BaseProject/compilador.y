@@ -11,10 +11,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include "compilador.h"
-#include "utils/tabela_simb/tabela_simb.h"
-#include "utils/tabela_simb/simbolo.h"
-#include "utils/pilha/pilha_int.h"
-#include "utils/pilha/pilha_simb_ptr.h"
+#include "utils/tabela_simb.h"
+#include "utils/pilha_int.h"
+#include "utils/pilha_simb_ptr.h"
 
 int num_vars;
 int num_params; // número de parâmetros do procedimento atual
@@ -31,8 +30,8 @@ int nr_procs_for_curr_proc;
 int atribui;
 
 char mepa_buf[128], proc_name[128], idents[128][128];
-struct tabela_de_simbolos *ts, *pilha_atribuicao;
-struct simbolo s, *sptr, *sptr_var_proc, *sptr_chamada_proc, *sptr_atribuicao, curr_proc, lista_simbolos[128];
+tabela_de_simbolos_t *ts, *pilha_atribuicao;
+simbolo_t s, *sptr, *sptr_var_proc, *sptr_chamada_proc, *sptr_atribuicao, curr_proc, lista_simbolos[128];
 struct pilha_int pilha_rotulos, pilha_amem, pilha_procs;
 struct pilha_simb_ptr pilha_ident_esquerdo;
 struct parametro lista_parametros[128];
@@ -65,20 +64,20 @@ int rot_w;
 %union{
    char * str;  // define o tipo str
    int int_val; // define o tipo int_val
-   struct simbolo *simb;
+   struct simbolo_t *simb;
 }
 
-%type <int_val> variavel; // atribui o tipo str a regra variavel
+%type <int_val> expressao;
+%type <int_val> expressao_simples;
 %type <str> mais_menos_or; // numa expressão
 %type <str> mais_menos_vazio; // antes de um fator
-%type <str> vezes_div_and;
-%type <str> relacao;
-%type <int_val> expressao;
 %type <int_val> numero; 
-%type <int_val> expressao_simples;
 %type <int_val> fator;
+%type <str> relacao;
 %type <int_val> termo;
 %type <int_val> tipo;
+%type <int_val> variavel; // atribui o tipo str a regra variavel
+%type <str> vezes_div_and;
 
 %nonassoc LOWER_THEN_ELSE
 %nonassoc ELSE
@@ -180,19 +179,19 @@ declara_vars: declara_vars declara_var
 */
 declara_var : { qt_tipo_atual = 0; }
               lista_id_var DOIS_PONTOS tipo
-              { atribui_tipo(&ts, variavel, $4, qt_tipo_atual); }
+              { atribui_tipo(&ts, VARIAVEL_S, $4, qt_tipo_atual); }
               PONTO_E_VIRGULA
 ;
 
 lista_id_var: lista_id_var VIRGULA IDENT {
                ti.var.deslocamento = num_vars;
-               s = cria_simbolo(token, variavel, nivel_lex, ti); 
+               s = cria_simbolo(token, VARIAVEL_S, nivel_lex, ti); 
                push(&ts, s);
                num_vars++; qt_tipo_atual++;
             }
             | IDENT { 
                ti.var.deslocamento = num_vars;
-               s = cria_simbolo(token, variavel, nivel_lex, ti); 
+               s = cria_simbolo(token, VARIAVEL_S, nivel_lex, ti); 
                push(&ts, s);
                num_vars++; qt_tipo_atual++;
             }
@@ -260,7 +259,7 @@ declara_proc: PROCEDURE
                // }
                printf("nome: %s nivel: %d desloca: %d\n",proc_name, nivel_lex, ti.var.deslocamento);
 
-               s = cria_simbolo(proc_name, procedimento, nivel_lex, ti);
+               s = cria_simbolo(proc_name, PROCEDIMENTO_S, nivel_lex, ti);
                push(&ts, s);
 
                // atribui o deslocamento correto e coloca na pilha os símbolos
@@ -320,7 +319,7 @@ declara_func: FUNCTION
                // }
                ti.var.tipo = $6;
                ti.var.deslocamento = -4 - num_params;
-               s = cria_simbolo(proc_name, funcao, nivel_lex, ti);
+               s = cria_simbolo(proc_name, FUNCAO_S, nivel_lex, ti);
                push(&ts, s);
 
                // atribui o deslocamento correto e coloca na pilha os símbolos
@@ -381,7 +380,7 @@ secao_parametros_formais : var_ou_vazio
                      for(int i = num_params-curr_section_params; i < num_params; ++i){
                         ti.param = lista_parametros[i];
                         ti.param.tipo = $5;
-                        lista_simbolos[i] = cria_simbolo(idents[i], parametro, nivel_lex, ti);
+                        lista_simbolos[i] = cria_simbolo(idents[i], PARAMETRO_S, nivel_lex, ti);
                      }
                    }                   
 ;
@@ -429,13 +428,16 @@ comando_sem_rotulo:
     <atribuição> ::=
     <variável>:= <expressão> 
 */
-atribuicao_proc:  IDENT 
+
+atribuicao_proc:  
+                  IDENT 
                   { 
                      // printf("Buscando o token %s\n", token);
                      sptr_var_proc = busca(&ts, token); 
                      // printf("Variavel %s tem deslocamento %d\n", sptr_var_proc->identificador, sptr_var_proc->conteudo.var.deslocamento);
-                     pilha_simb_ptr_empilhar(&pilha_ident_esquerdo, sptr_var_proc);
+                     pilha_simb_ptr_empilhar(&pilha_ident_esquerdo, busca(&ts, token));
                   } 
+                  /* variavel */
                   a_continua
                   { 
                      pilha_simb_ptr_desempilhar(&pilha_ident_esquerdo);
@@ -443,7 +445,7 @@ atribuicao_proc:  IDENT
 
 a_continua: ATRIBUICAO {atribui = 1;} atribuicao {atribui = 0;} |
             procedimento_sem_parametro |
-            procedimento;
+            chama_procedimento;
 
 atribuicao: 
    expressao {
@@ -457,14 +459,14 @@ atribuicao:
    
    // pode ser indireto
    // printf("%s: %d", sptr_var_proc->identificador, sptr_var_proc->categoria);
-   if (sptr_var_proc->categoria == variavel)
+   if (sptr_var_proc->categoria == VARIAVEL_S)
       sprintf(mepa_buf, "ARMZ %d, %d", sptr_var_proc->nivel, sptr_var_proc->conteudo.var.deslocamento);
-   else if (sptr_var_proc->categoria == parametro){
+   else if (sptr_var_proc->categoria == PARAMETRO_S){
       if (sptr_var_proc->conteudo.param.passagem == parametro_copia)
          sprintf(mepa_buf, "ARMZ %d, %d", sptr_var_proc->nivel, sptr_var_proc->conteudo.param.deslocamento);
       else
          sprintf(mepa_buf, "ARMI %d, %d", sptr_var_proc->nivel, sptr_var_proc->conteudo.param.deslocamento);
-   } else if (sptr_var_proc->categoria == funcao){
+   } else if (sptr_var_proc->categoria == FUNCAO_S){
          sprintf(mepa_buf, "ARMZ %d, %d", sptr_var_proc->nivel, sptr_var_proc->conteudo.var.deslocamento);
    } else {
       fprintf(stderr, "ERRO: Procedimento tratado como variável!\n");
@@ -480,7 +482,7 @@ atribuicao:
    <chamada de procedimento> ::= 
     <identificador> [(<lista de expressões>)] 
 */
-procedimento:
+chama_procedimento:
              {
                sptr_var_proc = pilha_simb_ptr_topo(&pilha_ident_esquerdo);
 
@@ -489,16 +491,16 @@ procedimento:
                   exit(1);
               }
               sptr_atribuicao = sptr_var_proc;
-              memcpy(&curr_proc, sptr_var_proc, sizeof(struct simbolo));
+              memcpy(&curr_proc, sptr_var_proc, sizeof(simbolo_t));
              
               #ifdef DEBUG
              
               printf("curr_proc.categoria = %d\n", curr_proc.categoria);
-              printf("fun: %d\n", funcao);
-              printf("proc: %d\n", procedimento);
+              printf("fun: %d\n", FUNCAO_S);
+              printf("proc: %d\n", PROCEDIMENTO_S);
 
               #endif  
-              if(curr_proc.categoria == funcao ){
+              if(curr_proc.categoria == FUNCAO_S ){
                   geraCodigo(NULL, "AMEM 1");
               }
               sprintf(proc_name, "CHPR R%02d, %d", sptr_var_proc->conteudo.proc.rotulo, nivel_lex);
@@ -568,16 +570,6 @@ comando_condicional: IF expressao {
                         pilha_int_desempilhar(&pilha_rotulos);
                      }  
 ;
-
-/* else_ou_vazio: ELSE comando_sem_rotulo
-{
-                        sprintf(rot_str, "R%02d", pilha_int_topo(&pilha_rotulos));
-                        geraCodigo(rot_str, "NADA");
-
-                        pilha_int_desempilhar(&pilha_rotulos);
-                     } 
-            | %prec LOWER_THEN_ELSE
-; */
 
 /* 
    REGRA 23
@@ -736,7 +728,7 @@ vezes_div_and  : VEZES { $$ = strdup("MULT"); }
 ;
 
 
-procedimento_ou_vazio: procedimento {
+procedimento_ou_vazio: chama_procedimento {
                         sptr_var_proc = pilha_simb_ptr_topo(&pilha_ident_esquerdo);
                         pilha_simb_ptr_desempilhar(&pilha_ident_esquerdo);
                      }
@@ -754,6 +746,64 @@ procedimento_ou_vazio: procedimento {
     |not <fator> 
 */
 fator : variavel
+         procedimento_ou_vazio { 
+
+         if(!sptr){
+            printf("Variável não encontrada\n");
+            exit(1);
+         }
+         
+         // printf("Variavel %s nivel %d, deslocamento %d\n", sptr->identificador, sptr->nivel, sptr->conteudo.var.deslocamento);
+         $$ = sptr->conteudo.var.tipo;
+         // pode ser indireto
+         int flag = 0;
+         if (sptr->categoria == VARIAVEL_S){
+            
+            if (dentro_chamada_proc){
+               int qtd_params = sptr_var_proc->conteudo.proc.qtd_parametros;
+               // printf("curr: %d actual: %d\n", curr_call_params, qtd_params);
+               if (curr_call_params >= qtd_params){
+                  fprintf(stderr, "ERRO: Excesso de parâmetros em chamada de função!\n");
+                  exit(1);
+               }
+               if (sptr_var_proc->conteudo.proc.lista[curr_call_params].passagem == parametro_ref){
+                  sprintf(mepa_buf, "CREN %d, %d", sptr->nivel, sptr->conteudo.var.deslocamento);
+               }
+               else if (sptr_var_proc->conteudo.proc.lista[curr_call_params].passagem == parametro_copia){
+                  sprintf(mepa_buf, "CRVL %d, %d", sptr->nivel, sptr->conteudo.var.deslocamento);
+               }else {
+                  fprintf(stderr, "ERRO: INTERNAL ERROR: parametro não é nem copia nem referencia\n");
+                  exit(1);
+               }
+            } else if (sptr_var_proc && sptr_var_proc->categoria != FUNCAO_S){
+               sprintf(mepa_buf, "CRVL %d, %d", sptr->nivel, sptr->conteudo.var.deslocamento);
+            } else if (atribui && (sptr_var_proc && sptr_var_proc->categoria == FUNCAO_S) && sptr_atribuicao->categoria != FUNCAO_S){
+               sprintf(mepa_buf, "CRVL %d, %d", sptr->nivel, sptr->conteudo.var.deslocamento);
+
+            } else {
+               flag = 1;
+            }
+
+         }
+         else if (sptr->categoria == PARAMETRO_S){
+            if (sptr->conteudo.param.passagem == parametro_copia)
+               sprintf(mepa_buf, "CRVL %d, %d", sptr->nivel, sptr->conteudo.param.deslocamento);
+            else {
+               if(sptr_var_proc->conteudo.proc.lista[curr_call_params].passagem == parametro_ref){
+                  sprintf(mepa_buf, "CRVL %d, %d", sptr->nivel, sptr->conteudo.param.deslocamento);
+               } else {
+                  sprintf(mepa_buf, "CRVI %d, %d", sptr->nivel, sptr->conteudo.param.deslocamento);
+               }
+            }
+         } else if (sptr->categoria != FUNCAO_S){
+            fprintf(stderr, "ERRO: Procedimento tratado como variável!!\n");
+            exit(1);
+         } else {
+            flag = 1;
+         }
+         if(!flag)
+            geraCodigo(NULL, mepa_buf);
+      }; 
       | numero
       | VALOR_BOOL {
          $$ = pas_boolean;
@@ -781,70 +831,12 @@ fator : variavel
    <variável> ::=
       <identificador>
       |<identificador> [<lista de expressões>] */
-variavel:   IDENT
+variavel:   
+         IDENT
          {
             sptr = busca(&ts, token);
             pilha_simb_ptr_empilhar(&pilha_ident_esquerdo, busca(&ts, token));
-
-         } 
-         procedimento_ou_vazio { 
-
-         if(!sptr){
-            printf("Variável não encontrada\n");
-            exit(1);
-         }
-         
-         // printf("Variavel %s nivel %d, deslocamento %d\n", sptr->identificador, sptr->nivel, sptr->conteudo.var.deslocamento);
-         $$ = sptr->conteudo.var.tipo;
-         // pode ser indireto
-         int flag = 0;
-         if (sptr->categoria == variavel){
-            
-            if (dentro_chamada_proc){
-               int qtd_params = sptr_var_proc->conteudo.proc.qtd_parametros;
-               // printf("curr: %d actual: %d\n", curr_call_params, qtd_params);
-               if (curr_call_params >= qtd_params){
-                  fprintf(stderr, "ERRO: Excesso de parâmetros em chamada de função!\n");
-                  exit(1);
-               }
-               if (sptr_var_proc->conteudo.proc.lista[curr_call_params].passagem == parametro_ref){
-                  sprintf(mepa_buf, "CREN %d, %d", sptr->nivel, sptr->conteudo.var.deslocamento);
-               }
-               else if (sptr_var_proc->conteudo.proc.lista[curr_call_params].passagem == parametro_copia){
-                  sprintf(mepa_buf, "CRVL %d, %d", sptr->nivel, sptr->conteudo.var.deslocamento);
-               }else {
-                  fprintf(stderr, "ERRO: INTERNAL ERROR: parametro não é nem copia nem referencia\n");
-                  exit(1);
-               }
-            } else if (sptr_var_proc && sptr_var_proc->categoria != funcao){
-               sprintf(mepa_buf, "CRVL %d, %d", sptr->nivel, sptr->conteudo.var.deslocamento);
-            } else if (atribui && (sptr_var_proc && sptr_var_proc->categoria == funcao) && sptr_atribuicao->categoria != funcao){
-               sprintf(mepa_buf, "CRVL %d, %d", sptr->nivel, sptr->conteudo.var.deslocamento);
-
-            } else {
-               flag = 1;
-            }
-
-         }
-         else if (sptr->categoria == parametro){
-            if (sptr->conteudo.param.passagem == parametro_copia)
-               sprintf(mepa_buf, "CRVL %d, %d", sptr->nivel, sptr->conteudo.param.deslocamento);
-            else {
-               if(sptr_var_proc->conteudo.proc.lista[curr_call_params].passagem == parametro_ref){
-                  sprintf(mepa_buf, "CRVL %d, %d", sptr->nivel, sptr->conteudo.param.deslocamento);
-               } else {
-                  sprintf(mepa_buf, "CRVI %d, %d", sptr->nivel, sptr->conteudo.param.deslocamento);
-               }
-            }
-         } else if (sptr->categoria != funcao){
-            fprintf(stderr, "ERRO: Procedimento tratado como variável!!\n");
-            exit(1);
-         } else {
-            flag = 1;
-         }
-         if(!flag)
-            geraCodigo(NULL, mepa_buf);
-      }; 
+         }; 
 
 /*  ADICIONAR REGRA NUMERO */
 
@@ -863,7 +855,7 @@ item_leitura: IDENT
                {
                   geraCodigo(NULL, "LEIT");
                   sptr = busca(&ts, token);
-                  if(!sptr || sptr->categoria == procedimento){
+                  if(!sptr || sptr->categoria == PROCEDIMENTO_S){
                      fprintf(stderr, "ERRO:\n Wrong use of read()\n"); 
                      exit(1);
                   }

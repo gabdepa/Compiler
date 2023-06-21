@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "../tabela_simb/simbolo.h"
 #include "pilha_simb_ptr.h"
 
 void pilha_simb_ptr_inicializar(struct pilha_simb_ptr *p){
@@ -11,12 +10,12 @@ void pilha_simb_ptr_inicializar(struct pilha_simb_ptr *p){
     p->topo = 0;
 }
 
-void pilha_simb_ptr_empilhar(struct pilha_simb_ptr *p, struct simbolo * simb){
+void pilha_simb_ptr_empilhar(struct pilha_simb_ptr *p, simbolo_t * simb){
 
     if (p->topo == p->tam){
-        struct simbolo **auxptr = NULL;
+        simbolo_t **auxptr = NULL;
         p->tam += PILHA_TAM_INCREMENTO;
-        auxptr = realloc(p->p, p->tam*sizeof(struct simbolo *));
+        auxptr = realloc(p->p, p->tam*sizeof(simbolo_t *));
         if (auxptr == NULL){
             fprintf(stderr, "Erro alocando pilha de inteiros! Abortando programa...\n");
             exit(0);
@@ -26,7 +25,7 @@ void pilha_simb_ptr_empilhar(struct pilha_simb_ptr *p, struct simbolo * simb){
     p->p[p->topo++] = simb;
 }
 
-struct simbolo *pilha_simb_ptr_topo(struct pilha_simb_ptr *p){
+simbolo_t *pilha_simb_ptr_topo(struct pilha_simb_ptr *p){
     if (p->tam > 0)
         return p->p[p->topo-1];
     else {
