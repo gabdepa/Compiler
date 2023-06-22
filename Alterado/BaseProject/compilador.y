@@ -401,7 +401,14 @@ comando_composto: T_BEGIN comandos T_END
    <comando> ::=
     [<número>:] <comando sem rótulo> */
 comandos: 
-   NUMERO {
+   comando_sem_rotulo |
+   comandos PONTO_E_VIRGULA comando_sem_rotulo;
+
+comando_vazio:;
+
+numero_teste: 
+      NUMERO
+      {
       sptr = busca_simbolo(&ts, token);
       if(!sptr){
          fprintf(stderr, "ERRO:\n Rotulo do goto nao existe\n"); 
@@ -412,15 +419,7 @@ comandos:
       // corrente e n é o número de variáveis locais do procedimento corrente
       sprintf(buffer_mepa, "ENRT %d, %d", nivel_lex, num_vars);
       geraCodigo(NULL, buffer_mepa);
-   } DOIS_PONTOS
-   comando_sem_rotulo | 
-   comando_sem_rotulo |
-   comandos PONTO_E_VIRGULA comando_sem_rotulo;
-
-
-
-comando_vazio:;
-
+   } DOIS_PONTOS comando_sem_rotulo; 
 /* 
    REGRA 18
    <comando sem rótulo> ::=
@@ -433,7 +432,8 @@ comando_vazio:;
 */
 comando_sem_rotulo: 
                   atribuicao_proc
-                  | desvio
+                  | numero_teste 
+                  | desvio 
                   | comando_composto
                   | comando_condicional
                   | comando_repetitivo 
@@ -553,7 +553,7 @@ desvio: GOTO NUMERO{
    }
    sprintf(buffer_mepa, "DSVR %d, %d, %d", atoi(sptr->identificador),sptr->nivel, nivel_lex);
    geraCodigo(NULL, buffer_mepa);
-};
+} PONTO_E_VIRGULA comando_sem_rotulo;
 
 /*
    REGRA 22
@@ -562,7 +562,8 @@ desvio: GOTO NUMERO{
         [else <comando sem rótulo>] 
 */
 
-comando_condicional: IF expressao {
+comando_condicional: IF 
+   expressao {
                         if ($2 != BOOLEAN_S){
                            fprintf(stderr, "ERRO:\n Expressão do If não é booleana!\n");
                            exit(1);

@@ -4,3 +4,11 @@
 R00: NADA 
      LEIT
      ARMZ 0, 0
+     ENRT 0, 1
+     CRCT 1
+     CMME
+     DSVF R02
+     DSVR 200, 0, 0
+     IMPR
+     DSVS R01
+R02: NADA 
