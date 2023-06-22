@@ -2,15 +2,15 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "pilha_simb_ptr.h"
+#include "pilha_tipos.h"
 
-void pilha_simb_ptr_inicializar(struct pilha_simb_ptr *p){
+void pilha_tipos_inicializar(struct pilha_tipos *p){
     p->p = NULL;
     p->tam = 0;
     p->topo = 0;
 }
 
-void pilha_simb_ptr_empilhar(struct pilha_simb_ptr *p, simbolo_t * simb){
+void pilha_tipos_empilhar(struct pilha_tipos *p, simbolo_t * simb){
 
     if (p->topo == p->tam){
         simbolo_t **auxptr = NULL;
@@ -25,7 +25,7 @@ void pilha_simb_ptr_empilhar(struct pilha_simb_ptr *p, simbolo_t * simb){
     p->p[p->topo++] = simb;
 }
 
-simbolo_t *pilha_simb_ptr_topo(struct pilha_simb_ptr *p){
+simbolo_t *pilha_tipos_topo(struct pilha_tipos *p){
     if (p->tam > 0)
         return p->p[p->topo-1];
     else {
@@ -35,15 +35,15 @@ simbolo_t *pilha_simb_ptr_topo(struct pilha_simb_ptr *p){
     return NULL;
 }
 
-int pilha_simb_ptr_vazia(struct pilha_simb_ptr *p){
+int pilha_tipos_vazia(struct pilha_tipos *p){
     return p->topo == 0;
 }
 
-void pilha_simb_ptr_desempilhar(struct pilha_simb_ptr *p){
+void pilha_tipos_desempilhar(struct pilha_tipos *p){
     p->topo--;
 }
 
-void pilha_simb_ptr_destruir(struct pilha_simb_ptr *p){
+void pilha_tipos_destruir(struct pilha_tipos *p){
     p->topo = 0;
     p->tam = 0;
     free(p->p);

@@ -52,7 +52,7 @@ typedef struct simbolo_t{
     char *identificador;
     int categoria;
     int nivel;
-    cat_conteudo conteudo;
+    cat_conteudo conteudo; // conteudo do simbolo contem variavel | parametro | procedimento
 } simbolo_t;
 
 
@@ -64,10 +64,10 @@ typedef struct tabela_de_simbolos_t{
 
 simbolo_t cria_simbolo(char *ident, int cat, int niv, cat_conteudo tipo);
 void inicializa(tabela_de_simbolos_t **ts);
-void push(tabela_de_simbolos_t **ts, simbolo_t);
+void insere_tabela(tabela_de_simbolos_t **ts, simbolo_t);
 simbolo_t pop(tabela_de_simbolos_t **ts) ;
-void remove_n(tabela_de_simbolos_t **ts, int n);
-simbolo_t *busca(tabela_de_simbolos_t **ts, const char *nome);
+void remove_n_tabela(tabela_de_simbolos_t **ts, int n);
+simbolo_t *busca_simbolo(tabela_de_simbolos_t **ts, const char *nome);
 void atribui_tipo(tabela_de_simbolos_t **ts, int categoria, int tipo, int qtd);
 
 #endif
