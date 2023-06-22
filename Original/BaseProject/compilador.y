@@ -531,13 +531,14 @@ comando_condicional: IF expressao {
                         geraCodigo(rot_str, "NADA");
 
                      } 
-                     ELSE comando_sem_rotulo
-                     {
+                      else_ou_vazio {
                         sprintf(rot_str, "R%02d", pilha_rotulos_topo(&pilha_rotulos));
                         geraCodigo(rot_str, "NADA");
                         pilha_rotulos_desempilhar(&pilha_rotulos);
-                     }  
+                     }
 ;
+
+else_ou_vazio: ELSE comando_sem_rotulo  | %prec LOWER_THEN_ELSE;
 
 /* 
    REGRA 23
