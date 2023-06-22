@@ -147,13 +147,14 @@ bloco       :
       label <número> {, <número>}; 
 */
 parte_declara_rotulo:
-   NUMERO lista_labels | comando_vazio
+   LABEL lista_labels PONTO_E_VIRGULA| comando_vazio
             ;
 lista_labels: lista_labels VIRGULA ident_labels
-| ident_labels;
+| ident_labels {printf("VOLTEI \n");};
 
 ident_labels:  NUMERO 
                {
+                  printf("CRIANDO SIMBOLO %s",token);
                   s = cria_simbolo(token, LABEL_S, nivel_lex, ti); 
                   insere_tabela(&ts, s);
                };
@@ -411,7 +412,7 @@ comandos:
       // corrente e n é o número de variáveis locais do procedimento corrente
       sprintf(buffer_mepa, "ENRT %d, %d", nivel_lex, num_vars);
       geraCodigo(NULL, buffer_mepa);
-   }
+   } DOIS_PONTOS
    comando_sem_rotulo | 
    comando_sem_rotulo |
    comandos PONTO_E_VIRGULA comando_sem_rotulo;

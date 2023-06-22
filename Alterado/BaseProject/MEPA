@@ -1,1 +1,6 @@
      INPP
+     AMEM 1
+     DSVS R00
+R00: NADA 
+     LEIT
+     ARMZ 0, 0
