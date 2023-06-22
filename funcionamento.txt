@@ -1,0 +1,3 @@
+Não há problema detectados, apenas diferença entre a implementação do AMEM tal que a cada ; posterior a var já efetuamos o AMEM dessas variáveis, já no avaliaTrab, o AMEM é feito apenas posteriormente de forma geral.
+As mensagens de erro geradas pelo compilador podem estar diferentes. 
+ 

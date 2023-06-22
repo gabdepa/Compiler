@@ -1,0 +1,41 @@
+DIFICULDADES:
+As maiores dificuldades que encontramos ao longo do desenvolvimento foram entender o funcionamento do yacc para conseguir efetuar debugs no código 
+e suas mensagens de erro, pois eram diferentes das linguagens que tinhamos conhecimento até o momento. Também como implementar o funcionamento esperado
+utilizando a sintaxe do Yacc em conjunção com os códigos implementados em linguagem C.  
+
+RECORD: 
+Descriação do comando Record: No Pascal, a instrução “record” define um tipo de dados complexo com vários campos de diferentes tipos. Exemplo::
+type
+  Pessoa = record
+    nome: String;
+    idade: Integer;
+    ehEstudante: Boolean;
+end;
+Como Incluí-lo no compilador:
+Essa adição se daria por meio de 4 passos:
+1. Definir o novo token no lexer (Flex): Seria adicionado uma regra para reconhecer o novo token no arquivo .l (lexer):
+"record"  { return T_RECORD; }
+
+2. Adicionar o novo token no parser (Bison): No arquivo .y (parser), seria adicionado o novo token na seção de declarações de token.
+%token T_RECORD
+3. Definir a gramática para o novo comando: Ainda no arquivo .y, seria definido a gramática para o novo comando. Por exemplo, assumindo que um "record" é semelhante a uma "struct" em C, com a sintaxe record IDENTIFICADOR { TIPO_IDENTIFICADOR; ... }, a gramática poderia ser algo como:
+declaracao_record:
+    T_RECORD IDENTIFICADOR'{' campos '}'
+    {
+        /* código necessário para processar um registro aqui */
+    }
+;
+campos:
+    campos campo
+    | campo
+;
+campo:
+    tipo_identificador';'
+    {
+        /* código necessário para processar um campo do registro aqui */
+    }
+;
+3.1. Adição do tipo record ao vetor de tipos: Quando o compilador encontrar uma definição de record, ele deve adicionar o nome do record a um vetor de tipos. Este vetor é implementado como um vetor de estruturas do tipo "tipo", onde cada "tipo" tem um campo eh_record para indicar se o tipo é um record, e vetores campos_id e campos_tipo para armazenar o identificador e o tipo de cada campo do record.
+3.2. Adição de campos à tabela de símbolos: A tabela de símbolos deve ter campos adicionais para lidar com records. Isso pode incluir um campo eh_record para indicar se um símbolo é um record, um campo qtd_campos para indicar o número de campos que um record tem, um vetor vetor_de_campos para armazenar os índices dos campos de um record, um campo eh_campo para indicar se um símbolo é um campo de um record, e um campo indice_record para armazenar o índice do record ao qual um campo está associado.
+3.3. Adição de records e campos à tabela de símbolos: Quando o compilador encontrar uma variável que é do tipo de um record, ele deve adicionar um símbolo para o record à tabela de símbolos, bem como um símbolo para cada campo do record. Esses campos devem ter os mesmos nomes e tipos que são definidos na definição do record. O compilador deve ser capaz de lidar com o caso onde variáveis podem ter o mesmo nome que um campo de um record.
+4. Acesso aos campos de um record: Quando o código Pascal acessa um campo de um record, o compilador deve primeiro verificar se esse campo existe para o record (usando o vetor de símbolos). Se o campo existir, o compilador deve acessar o símbolo com esse nome na tabela de símbolos e acessar a posição de memória normalmente. Para armazenar em um campo de record, o compilador pode usar um comando como ARMZ (por exemplo, ARMZ 0,0 para armazenar em c.x). O tipo do campo pode ser determinado a partir do vetor de tipos.

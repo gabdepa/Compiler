@@ -1,27 +1,21 @@
-As alterações realizadas estão lsitadas abaixa conforme diferenças entre arquivo original Alterações realizadas :
+# Descrição da Ideia Original 
 
-Adição [ <parte de declarações de rotulos> ] na regra 2. 
+A ideia original foi a alteração das regras de comando_sem_rotulo para adição do desvio ao caso fosse achado um goto, adição da regra de parte_declaração_rotulos e inclusão na regra de bloco do programa. 
+Tivemos que alterar a regra de parte_declaracao_rotulos para quebrar em subregras que auxiliam a percorrer a lista_de_rotulos, pois é possível declarar múltiplos rótulos após o token LABEL. 
+ 
 
-Adicionada regra 3
-adicionado simbolo de label nos tipos definidos para simbolos. 
+# Trechos do Código Alterados 
+As alterações realizadas estão listadas abaixo conforme diferenças entre arquivo originais e alterados, foram realizadas alterações nos arquivos compilador.y e tabela_simb.h, conforme segue abaixo.
 
-Adição da regra 21
+## Alteração arquivo tabela_simb.h 
+Adicionado símbolo de label nos tipos definidos para a tabela de símbolos no arquivo tabela_simb.h. 
 
-Ao encontrar um goto na regra 21, seu compilador deverá gera DSVR OK 
-
-adição regra 17
-
-
-
-Alterações realizadas no código do compilador.y 
-
-Não utilizada pois não é necessário o amem para a declaração dos rótulos. 
-< int num_rotulos; // variavel auxiliar para guardar o numero de rotulos declarados
-117d115
+## Alterações realizadas no arquivo compilador.y 
 
 Adição da REGRA 3 - parte de declaração de rótulos, a qual também foi inserida na regra REGRA 02 - bloco. 
+
 <               parte_declara_rotulo
-144,160d141
+
 < /*
 <    REGRA 3
 <    <parte de declarações de rótulos> ::=
@@ -54,6 +48,7 @@ comando_sem_rotulo:
                   | escrita
                   | leitura
 
+
 Adição de regra label_goto para a declaração da label que efetua o goto para o NUMERO do token passado entre a lista de rotulos posterior ao token LABEL. 
 < label_goto: 
 <       NUMERO
@@ -85,28 +80,11 @@ Adição de regra REGRA 21 - desvio para que quando receber o token GOTO vá par
 <       fprintf(stderr, "ERRO: Rótulo não encontrado!\n"); 
 <       exit(1);
 <    }
-<    sprintf(buffer_mepa, "DSVR %d, %d, %d", atoi(sptr->identificador),sptr->nivel, nivel_lex); // 
+// Como salvamos o rótulo com o identificar com o token do número recebido após a labelo, utilizamos um atoi do identificador do simbolo buscado e desivamos para o nível que já estava sendo salvo 
+// no trabalho Original e o nivel_lex é uma variável global que é incrementada conforme as mudanças de nível léxico. DSVR p=numero,j=nivel_label,k=nivel_lex_atual
+<    sprintf(buffer_mepa, "DSVR %d, %d, %d", atoi(sptr->identificador),sptr->nivel, nivel_lex); 
 <    geraCodigo(NULL, buffer_mepa);
 < } ;
 
-
-
-< 
-< /*
-573,574c513
-< comando_condicional: IF 
-<    expressao {
----
-> comando_condicional: IF expressao {
-595,598c534,535
-<                      else_ou_vazio
-< ;
-< 
-< else_ou_vazio: ELSE comando_sem_rotulo {
----
->                      ELSE comando_sem_rotulo
->                      {
-602c539,540
-<                      } | comando_vazio;
----
->                      } 
+# Maiores Problemas para Fazer Funcionar
+O maior problema para fazer funcionar foi o entendimento do funcionamento da declaração, pois inicialmente estávamos pensando em como seria a execução do programa e ficamos pensando em como efetuar as movimentações da pilha para armazenamento dos rótulos armazenados. Além do debug da regra da declaração do rótulos, o que também levou um tempo. 
