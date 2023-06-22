@@ -99,40 +99,40 @@ Gramática
 
    47 comando_vazio: %empty
 
-   48 $@13: %empty
+   48 comando_sem_rotulo: atribuicao_proc
+   49                   | label_goto
+   50                   | desvio
+   51                   | comando_composto
+   52                   | comando_condicional
+   53                   | comando_repetitivo
+   54                   | escrita
+   55                   | leitura
 
-   49 label_goto: NUMERO $@13 DOIS_PONTOS comando_sem_rotulo
+   56 $@13: %empty
 
-   50 desvio: GOTO NUMERO
+   57 label_goto: NUMERO $@13 DOIS_PONTOS comando_sem_rotulo
 
-   51 comando_sem_rotulo: atribuicao_proc
-   52                   | label_goto
-   53                   | desvio
-   54                   | comando_composto
-   55                   | comando_condicional
-   56                   | comando_repetitivo
-   57                   | escrita
-   58                   | leitura
+   58 $@14: %empty
 
-   59 $@14: %empty
+   59 atribuicao_proc: IDENT $@14 a_continua
 
-   60 atribuicao_proc: IDENT $@14 a_continua
+   60 $@15: %empty
 
-   61 $@15: %empty
+   61 a_continua: ATRIBUICAO $@15 atribuicao
+   62           | procedimento_sem_parametro
+   63           | chama_procedimento
 
-   62 a_continua: ATRIBUICAO $@15 atribuicao
-   63           | procedimento_sem_parametro
-   64           | chama_procedimento
+   64 atribuicao: expressao
 
-   65 atribuicao: expressao
+   65 $@16: %empty
 
-   66 $@16: %empty
+   66 $@17: %empty
 
-   67 $@17: %empty
+   67 chama_procedimento: $@16 ABRE_PARENTESES $@17 lista_expressoes FECHA_PARENTESES
 
-   68 chama_procedimento: $@16 ABRE_PARENTESES $@17 lista_expressoes FECHA_PARENTESES
+   68 procedimento_sem_parametro: %empty
 
-   69 procedimento_sem_parametro: %empty
+   69 desvio: GOTO NUMERO
 
    70 $@18: %empty
 
@@ -222,7 +222,7 @@ Terminais, com as regras onde eles aparecem
     FUNCTION (265) 34
     T_BEGIN (266) 44
     T_END (267) 44
-    GOTO (268) 50
+    GOTO (268) 69
     IF (269) 72
     THEN (270) 72
     ELSE (271) 73
@@ -232,25 +232,25 @@ Terminais, com as regras onde eles aparecem
     AND (275) 101
     NOT (276) 108
     DIV (277) 100
-    ATRIBUICAO (278) 62
+    ATRIBUICAO (278) 61
     PONTO_E_VIRGULA (279) 2 6 19 26 27 31 34 38 46
-    DOIS_PONTOS (280) 19 34 41 49
+    DOIS_PONTOS (280) 19 34 41 57
     VIRGULA (281) 8 20 22 79 112 116
     PONTO (282) 2
-    ABRE_PARENTESES (283) 2 37 68 107 111 115
-    FECHA_PARENTESES (284) 2 37 68 107 111 115
+    ABRE_PARENTESES (283) 2 37 67 107 111 115
+    FECHA_PARENTESES (284) 2 37 67 107 111 115
     ABRE_COLCHETES (285)
     FECHA_COLCHETES (286)
     ABRE_CHAVES (287)
     FECHA_CHAVES (288)
-    IDENT (289) 2 20 21 24 31 34 60 109 114
+    IDENT (289) 2 20 21 24 31 34 59 109 114
     MAIOR (290) 88
     MENOR (291) 85
     IGUAL (292) 83
     MAIS (293) 91 94
     MENOS (294) 92 95
     VEZES (295) 99
-    NUMERO (296) 10 49 50 110
+    NUMERO (296) 10 57 69 110
     DIFERENTE (297) 84
     MENOR_IGUAL (298) 86
     MAIOR_IGUAL (299) 87
@@ -363,55 +363,55 @@ Não terminais com as regras onde eles aparecem
         à direita: 41
     comando_composto (83)
         à esquerda: 44
-        à direita: 5 54
+        à direita: 5 51
     comandos (84)
         à esquerda: 45 46
         à direita: 44 46
     comando_vazio (85)
         à esquerda: 47
         à direita: 7 28 36 74 103
-    label_goto (86)
-        à esquerda: 49
-        à direita: 52
-    $@13 (87)
-        à esquerda: 48
+    comando_sem_rotulo (86)
+        à esquerda: 48 49 50 51 52 53 54 55
+        à direita: 45 46 57 72 73 77
+    label_goto (87)
+        à esquerda: 57
         à direita: 49
-    desvio (88)
-        à esquerda: 50
-        à direita: 53
-    comando_sem_rotulo (89)
-        à esquerda: 51 52 53 54 55 56 57 58
-        à direita: 45 46 49 72 73 77
-    atribuicao_proc (90)
-        à esquerda: 60
-        à direita: 51
-    $@14 (91)
+    $@13 (88)
+        à esquerda: 56
+        à direita: 57
+    atribuicao_proc (89)
         à esquerda: 59
-        à direita: 60
-    a_continua (92)
-        à esquerda: 62 63 64
-        à direita: 60
-    $@15 (93)
-        à esquerda: 61
-        à direita: 62
-    atribuicao (94)
-        à esquerda: 65
-        à direita: 62
-    chama_procedimento (95)
-        à esquerda: 68
-        à direita: 64 102
-    $@16 (96)
-        à esquerda: 66
-        à direita: 68
-    $@17 (97)
+        à direita: 48
+    $@14 (90)
+        à esquerda: 58
+        à direita: 59
+    a_continua (91)
+        à esquerda: 61 62 63
+        à direita: 59
+    $@15 (92)
+        à esquerda: 60
+        à direita: 61
+    atribuicao (93)
+        à esquerda: 64
+        à direita: 61
+    chama_procedimento (94)
         à esquerda: 67
-        à direita: 68
-    procedimento_sem_parametro (98)
+        à direita: 63 102
+    $@16 (95)
+        à esquerda: 65
+        à direita: 67
+    $@17 (96)
+        à esquerda: 66
+        à direita: 67
+    procedimento_sem_parametro (97)
+        à esquerda: 68
+        à direita: 62
+    desvio (98)
         à esquerda: 69
-        à direita: 63
+        à direita: 50
     comando_condicional (99)
         à esquerda: 72
-        à direita: 55
+        à direita: 52
     $@18 (100)
         à esquerda: 70
         à direita: 72
@@ -423,7 +423,7 @@ Não terminais com as regras onde eles aparecem
         à direita: 72
     comando_repetitivo (103)
         à esquerda: 77
-        à direita: 56
+        à direita: 53
     $@20 (104)
         à esquerda: 75
         à direita: 77
@@ -432,13 +432,13 @@ Não terminais com as regras onde eles aparecem
         à direita: 77
     lista_expressoes (106)
         à esquerda: 79 80
-        à direita: 68 79
+        à direita: 67 79
     $@22 (107)
         à esquerda: 78
         à direita: 79
     expressao <int_value> (108)
         à esquerda: 81 82
-        à direita: 65 72 77 79 80 107 116 117
+        à direita: 64 72 77 79 80 107 116 117
     relacao <str_value> (109)
         à esquerda: 83 84 85 86 87 88
         à direita: 82
@@ -471,7 +471,7 @@ Não terminais com as regras onde eles aparecem
         à direita: 105
     leitura (119)
         à esquerda: 111
-        à direita: 58
+        à direita: 55
     leitura_itens (120)
         à esquerda: 112 113
         à direita: 111 112
@@ -480,7 +480,7 @@ Não terminais com as regras onde eles aparecem
         à direita: 112 113
     escrita (122)
         à esquerda: 115
-        à direita: 57
+        à direita: 54
     escreve_itens (123)
         à esquerda: 116 117
         à direita: 115 116
@@ -872,10 +872,10 @@ Estado 44
 
     comando_composto     ir ao estado 59
     comandos             ir ao estado 60
-    label_goto           ir ao estado 61
-    desvio               ir ao estado 62
-    comando_sem_rotulo   ir ao estado 63
-    atribuicao_proc      ir ao estado 64
+    comando_sem_rotulo   ir ao estado 61
+    label_goto           ir ao estado 62
+    atribuicao_proc      ir ao estado 63
+    desvio               ir ao estado 64
     comando_condicional  ir ao estado 65
     comando_repetitivo   ir ao estado 66
     leitura              ir ao estado 67
@@ -947,7 +947,7 @@ Estado 51
 
 Estado 52
 
-   50 desvio: GOTO • NUMERO
+   69 desvio: GOTO • NUMERO
 
     NUMERO  deslocar, e ir ao estado 78
 
@@ -977,18 +977,18 @@ Estado 54
 
 Estado 55
 
-   60 atribuicao_proc: IDENT • $@14 a_continua
+   59 atribuicao_proc: IDENT • $@14 a_continua
 
-    $padrão  reduzir usando a regra 59 ($@14)
+    $padrão  reduzir usando a regra 58 ($@14)
 
     $@14  ir ao estado 85
 
 
 Estado 56
 
-   49 label_goto: NUMERO • $@13 DOIS_PONTOS comando_sem_rotulo
+   57 label_goto: NUMERO • $@13 DOIS_PONTOS comando_sem_rotulo
 
-    $padrão  reduzir usando a regra 48 ($@13)
+    $padrão  reduzir usando a regra 56 ($@13)
 
     $@13  ir ao estado 86
 
@@ -1009,9 +1009,9 @@ Estado 58
 
 Estado 59
 
-   54 comando_sem_rotulo: comando_composto •
+   51 comando_sem_rotulo: comando_composto •
 
-    $padrão  reduzir usando a regra 54 (comando_sem_rotulo)
+    $padrão  reduzir usando a regra 51 (comando_sem_rotulo)
 
 
 Estado 60
@@ -1025,58 +1025,58 @@ Estado 60
 
 Estado 61
 
-   52 comando_sem_rotulo: label_goto •
-
-    $padrão  reduzir usando a regra 52 (comando_sem_rotulo)
-
-
-Estado 62
-
-   53 comando_sem_rotulo: desvio •
-
-    $padrão  reduzir usando a regra 53 (comando_sem_rotulo)
-
-
-Estado 63
-
    45 comandos: comando_sem_rotulo •
 
     $padrão  reduzir usando a regra 45 (comandos)
 
 
+Estado 62
+
+   49 comando_sem_rotulo: label_goto •
+
+    $padrão  reduzir usando a regra 49 (comando_sem_rotulo)
+
+
+Estado 63
+
+   48 comando_sem_rotulo: atribuicao_proc •
+
+    $padrão  reduzir usando a regra 48 (comando_sem_rotulo)
+
+
 Estado 64
 
-   51 comando_sem_rotulo: atribuicao_proc •
+   50 comando_sem_rotulo: desvio •
 
-    $padrão  reduzir usando a regra 51 (comando_sem_rotulo)
+    $padrão  reduzir usando a regra 50 (comando_sem_rotulo)
 
 
 Estado 65
 
-   55 comando_sem_rotulo: comando_condicional •
+   52 comando_sem_rotulo: comando_condicional •
 
-    $padrão  reduzir usando a regra 55 (comando_sem_rotulo)
+    $padrão  reduzir usando a regra 52 (comando_sem_rotulo)
 
 
 Estado 66
 
-   56 comando_sem_rotulo: comando_repetitivo •
+   53 comando_sem_rotulo: comando_repetitivo •
 
-    $padrão  reduzir usando a regra 56 (comando_sem_rotulo)
+    $padrão  reduzir usando a regra 53 (comando_sem_rotulo)
 
 
 Estado 67
 
-   58 comando_sem_rotulo: leitura •
+   55 comando_sem_rotulo: leitura •
 
-    $padrão  reduzir usando a regra 58 (comando_sem_rotulo)
+    $padrão  reduzir usando a regra 55 (comando_sem_rotulo)
 
 
 Estado 68
 
-   57 comando_sem_rotulo: escrita •
+   54 comando_sem_rotulo: escrita •
 
-    $padrão  reduzir usando a regra 57 (comando_sem_rotulo)
+    $padrão  reduzir usando a regra 54 (comando_sem_rotulo)
 
 
 Estado 69
@@ -1154,9 +1154,9 @@ Estado 77
 
 Estado 78
 
-   50 desvio: GOTO NUMERO •
+   69 desvio: GOTO NUMERO •
 
-    $padrão  reduzir usando a regra 50 (desvio)
+    $padrão  reduzir usando a regra 69 (desvio)
 
 
 Estado 79
@@ -1236,12 +1236,12 @@ Estado 84
 
 Estado 85
 
-   60 atribuicao_proc: IDENT $@14 • a_continua
+   59 atribuicao_proc: IDENT $@14 • a_continua
 
     ATRIBUICAO  deslocar, e ir ao estado 120
 
-    ABRE_PARENTESES  reduzir usando a regra 66 ($@16)
-    $padrão          reduzir usando a regra 69 (procedimento_sem_parametro)
+    ABRE_PARENTESES  reduzir usando a regra 65 ($@16)
+    $padrão          reduzir usando a regra 68 (procedimento_sem_parametro)
 
     a_continua                  ir ao estado 121
     chama_procedimento          ir ao estado 122
@@ -1251,7 +1251,7 @@ Estado 85
 
 Estado 86
 
-   49 label_goto: NUMERO $@13 • DOIS_PONTOS comando_sem_rotulo
+   57 label_goto: NUMERO $@13 • DOIS_PONTOS comando_sem_rotulo
 
     DOIS_PONTOS  deslocar, e ir ao estado 125
 
@@ -1302,10 +1302,10 @@ Estado 90
     WRITE    deslocar, e ir ao estado 58
 
     comando_composto     ir ao estado 59
-    label_goto           ir ao estado 61
-    desvio               ir ao estado 62
     comando_sem_rotulo   ir ao estado 131
-    atribuicao_proc      ir ao estado 64
+    label_goto           ir ao estado 62
+    atribuicao_proc      ir ao estado 63
+    desvio               ir ao estado 64
     comando_condicional  ir ao estado 65
     comando_repetitivo   ir ao estado 66
     leitura              ir ao estado 67
@@ -1541,7 +1541,7 @@ Estado 117
 
   104 fator: variavel • procedimento_ou_vazio
 
-    ABRE_PARENTESES  reduzir usando a regra 66 ($@16)
+    ABRE_PARENTESES  reduzir usando a regra 65 ($@16)
     $padrão          reduzir usando a regra 47 (comando_vazio)
 
     comando_vazio          ir ao estado 147
@@ -1568,44 +1568,44 @@ Estado 119
 
 Estado 120
 
-   62 a_continua: ATRIBUICAO • $@15 atribuicao
+   61 a_continua: ATRIBUICAO • $@15 atribuicao
 
-    $padrão  reduzir usando a regra 61 ($@15)
+    $padrão  reduzir usando a regra 60 ($@15)
 
     $@15  ir ao estado 151
 
 
 Estado 121
 
-   60 atribuicao_proc: IDENT $@14 a_continua •
+   59 atribuicao_proc: IDENT $@14 a_continua •
 
-    $padrão  reduzir usando a regra 60 (atribuicao_proc)
+    $padrão  reduzir usando a regra 59 (atribuicao_proc)
 
 
 Estado 122
 
-   64 a_continua: chama_procedimento •
+   63 a_continua: chama_procedimento •
 
-    $padrão  reduzir usando a regra 64 (a_continua)
+    $padrão  reduzir usando a regra 63 (a_continua)
 
 
 Estado 123
 
-   68 chama_procedimento: $@16 • ABRE_PARENTESES $@17 lista_expressoes FECHA_PARENTESES
+   67 chama_procedimento: $@16 • ABRE_PARENTESES $@17 lista_expressoes FECHA_PARENTESES
 
     ABRE_PARENTESES  deslocar, e ir ao estado 152
 
 
 Estado 124
 
-   63 a_continua: procedimento_sem_parametro •
+   62 a_continua: procedimento_sem_parametro •
 
-    $padrão  reduzir usando a regra 63 (a_continua)
+    $padrão  reduzir usando a regra 62 (a_continua)
 
 
 Estado 125
 
-   49 label_goto: NUMERO $@13 DOIS_PONTOS • comando_sem_rotulo
+   57 label_goto: NUMERO $@13 DOIS_PONTOS • comando_sem_rotulo
 
     T_BEGIN  deslocar, e ir ao estado 44
     GOTO     deslocar, e ir ao estado 52
@@ -1617,10 +1617,10 @@ Estado 125
     WRITE    deslocar, e ir ao estado 58
 
     comando_composto     ir ao estado 59
-    label_goto           ir ao estado 61
-    desvio               ir ao estado 62
     comando_sem_rotulo   ir ao estado 153
-    atribuicao_proc      ir ao estado 64
+    label_goto           ir ao estado 62
+    atribuicao_proc      ir ao estado 63
+    desvio               ir ao estado 64
     comando_condicional  ir ao estado 65
     comando_repetitivo   ir ao estado 66
     leitura              ir ao estado 67
@@ -1745,10 +1745,10 @@ Estado 138
     WRITE    deslocar, e ir ao estado 58
 
     comando_composto     ir ao estado 59
-    label_goto           ir ao estado 61
-    desvio               ir ao estado 62
     comando_sem_rotulo   ir ao estado 162
-    atribuicao_proc      ir ao estado 64
+    label_goto           ir ao estado 62
+    atribuicao_proc      ir ao estado 63
+    desvio               ir ao estado 64
     comando_condicional  ir ao estado 65
     comando_repetitivo   ir ao estado 66
     leitura              ir ao estado 67
@@ -1863,7 +1863,7 @@ Estado 150
 
 Estado 151
 
-   62 a_continua: ATRIBUICAO $@15 • atribuicao
+   61 a_continua: ATRIBUICAO $@15 • atribuicao
 
     MAIS   deslocar, e ir ao estado 79
     MENOS  deslocar, e ir ao estado 80
@@ -1878,18 +1878,18 @@ Estado 151
 
 Estado 152
 
-   68 chama_procedimento: $@16 ABRE_PARENTESES • $@17 lista_expressoes FECHA_PARENTESES
+   67 chama_procedimento: $@16 ABRE_PARENTESES • $@17 lista_expressoes FECHA_PARENTESES
 
-    $padrão  reduzir usando a regra 67 ($@17)
+    $padrão  reduzir usando a regra 66 ($@17)
 
     $@17  ir ao estado 168
 
 
 Estado 153
 
-   49 label_goto: NUMERO $@13 DOIS_PONTOS comando_sem_rotulo •
+   57 label_goto: NUMERO $@13 DOIS_PONTOS comando_sem_rotulo •
 
-    $padrão  reduzir usando a regra 49 (label_goto)
+    $padrão  reduzir usando a regra 57 (label_goto)
 
 
 Estado 154
@@ -1996,10 +1996,10 @@ Estado 165
     WRITE    deslocar, e ir ao estado 58
 
     comando_composto     ir ao estado 59
-    label_goto           ir ao estado 61
-    desvio               ir ao estado 62
     comando_sem_rotulo   ir ao estado 174
-    atribuicao_proc      ir ao estado 64
+    label_goto           ir ao estado 62
+    atribuicao_proc      ir ao estado 63
+    desvio               ir ao estado 64
     comando_condicional  ir ao estado 65
     comando_repetitivo   ir ao estado 66
     leitura              ir ao estado 67
@@ -2008,21 +2008,21 @@ Estado 165
 
 Estado 166
 
-   62 a_continua: ATRIBUICAO $@15 atribuicao •
+   61 a_continua: ATRIBUICAO $@15 atribuicao •
 
-    $padrão  reduzir usando a regra 62 (a_continua)
+    $padrão  reduzir usando a regra 61 (a_continua)
 
 
 Estado 167
 
-   65 atribuicao: expressao •
+   64 atribuicao: expressao •
 
-    $padrão  reduzir usando a regra 65 (atribuicao)
+    $padrão  reduzir usando a regra 64 (atribuicao)
 
 
 Estado 168
 
-   68 chama_procedimento: $@16 ABRE_PARENTESES $@17 • lista_expressoes FECHA_PARENTESES
+   67 chama_procedimento: $@16 ABRE_PARENTESES $@17 • lista_expressoes FECHA_PARENTESES
 
     MAIS   deslocar, e ir ao estado 79
     MENOS  deslocar, e ir ao estado 80
@@ -2093,7 +2093,7 @@ Estado 174
 
 Estado 175
 
-   68 chama_procedimento: $@16 ABRE_PARENTESES $@17 lista_expressoes • FECHA_PARENTESES
+   67 chama_procedimento: $@16 ABRE_PARENTESES $@17 lista_expressoes • FECHA_PARENTESES
 
     FECHA_PARENTESES  deslocar, e ir ao estado 182
 
@@ -2137,10 +2137,10 @@ Estado 179
     WRITE    deslocar, e ir ao estado 58
 
     comando_composto     ir ao estado 59
-    label_goto           ir ao estado 61
-    desvio               ir ao estado 62
     comando_sem_rotulo   ir ao estado 184
-    atribuicao_proc      ir ao estado 64
+    label_goto           ir ao estado 62
+    atribuicao_proc      ir ao estado 63
+    desvio               ir ao estado 64
     comando_condicional  ir ao estado 65
     comando_repetitivo   ir ao estado 66
     leitura              ir ao estado 67
@@ -2163,9 +2163,9 @@ Estado 181
 
 Estado 182
 
-   68 chama_procedimento: $@16 ABRE_PARENTESES $@17 lista_expressoes FECHA_PARENTESES •
+   67 chama_procedimento: $@16 ABRE_PARENTESES $@17 lista_expressoes FECHA_PARENTESES •
 
-    $padrão  reduzir usando a regra 68 (chama_procedimento)
+    $padrão  reduzir usando a regra 67 (chama_procedimento)
 
 
 Estado 183

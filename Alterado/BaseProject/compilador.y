@@ -406,44 +406,6 @@ comandos:
 
 comando_vazio:;
 
-label_goto: 
-      NUMERO
-      {
-      sptr = busca_simbolo(&ts, token);
-      if(!sptr){
-         fprintf(stderr, "ERRO:\n Rotulo do goto nao existe\n"); 
-         exit(1);
-      }
-      // ENRT k, n
-      // k é o nível léxico
-      // corrente e n é o número de variáveis locais do procedimento corrente
-      sprintf(buffer_mepa, "ENRT %d, %d", nivel_lex, num_vars);
-      geraCodigo(NULL, buffer_mepa);
-   } DOIS_PONTOS comando_sem_rotulo; 
-
-
-   /*
-   REGRA 21. 
-      <desvios> ::= goto <número>
-*/
-//    DSVR p,j,k"onde p rótulo mepa
-//    para onde desviar, j é o nível léxico onde está declarado o
-//    rótulo e k é o nível léxico corrente (k ≤ j)
-desvio: GOTO NUMERO{
-   sptr = busca_simbolo(&ts, token);
-   if(!sptr){
-      fprintf(stderr, "ERRO: Rótulo do goto não existe!\n"); 
-      exit(1);
-   }
-   if(sptr->nivel > nivel_lex)
-   {
-      fprintf(stderr, "ERRO: Rótulo não encontrado!\n");
-      exit(1);
-   }
-   sprintf(buffer_mepa, "DSVR %d, %d, %d", atoi(sptr->identificador),sptr->nivel, nivel_lex);
-   geraCodigo(NULL, buffer_mepa);
-} ;
-
 /* 
    REGRA 18
    <comando sem rótulo> ::=
@@ -464,6 +426,21 @@ comando_sem_rotulo:
                   | escrita
                   | leitura
 ;
+
+label_goto: 
+      NUMERO
+      {
+      sptr = busca_simbolo(&ts, token);
+      if(!sptr){
+         fprintf(stderr, "ERRO:\n Rotulo do goto nao existe\n"); 
+         exit(1);
+      }
+      // ENRT k, n
+      // k é o nível léxico
+      // corrente e n é o número de variáveis locais do procedimento corrente
+      sprintf(buffer_mepa, "ENRT %d, %d", nivel_lex, num_vars);
+      geraCodigo(NULL, buffer_mepa);
+   } DOIS_PONTOS comando_sem_rotulo; 
 
 
 /*
@@ -565,6 +542,28 @@ procedimento_sem_parametro:
 
 
 /*
+   REGRA 21. 
+      <desvios> ::= goto <número>
+*/
+//    DSVR p,j,k"onde p rótulo mepa
+//    para onde desviar, j é o nível léxico onde está declarado o
+//    rótulo e k é o nível léxico corrente (k ≤ j)
+desvio: GOTO NUMERO{
+   sptr = busca_simbolo(&ts, token);
+   if(!sptr){
+      fprintf(stderr, "ERRO: Rótulo do goto não existe!\n"); 
+      exit(1);
+   }
+   if(sptr->nivel > nivel_lex)
+   {
+      fprintf(stderr, "ERRO: Rótulo não encontrado!\n");
+      exit(1);
+   }
+   sprintf(buffer_mepa, "DSVR %d, %d, %d", atoi(sptr->identificador),sptr->nivel, nivel_lex);
+   geraCodigo(NULL, buffer_mepa);
+} ;
+
+/*
    REGRA 22
    <comando condicional> ::=
     if <expressão> then <comando sem rótulo>
@@ -594,12 +593,6 @@ comando_condicional: IF
 
                      } 
                      else_ou_vazio
-                     // ELSE comando_sem_rotulo
-                     // {
-                     //    sprintf(rot_str, "R%02d", pilha_rotulos_topo(&pilha_rotulos));
-                     //    geraCodigo(rot_str, "NADA");
-                     //    pilha_rotulos_desempilhar(&pilha_rotulos);
-                     // }  
 ;
 
 else_ou_vazio: ELSE comando_sem_rotulo {
