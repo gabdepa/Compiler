@@ -7,10 +7,6 @@ Terminais sem uso na gramática
     FECHA_COLCHETES
     ABRE_CHAVES
     FECHA_CHAVES
-    LOWER_THEN_ELSE
-
-
-Estado 173 conflitos: 1 de deslocamento/redução
 
 
 Gramática
@@ -141,7 +137,7 @@ Gramática
    72 comando_condicional: IF expressao $@18 THEN comando_sem_rotulo $@19 else_ou_vazio
 
    73 else_ou_vazio: ELSE comando_sem_rotulo
-   74              | comando_vazio
+   74              | %empty
 
    75 $@20: %empty
 
@@ -369,7 +365,7 @@ Não terminais com as regras onde eles aparecem
         à direita: 44 46
     comando_vazio (85)
         à esquerda: 47
-        à direita: 7 28 36 74 103
+        à direita: 7 28 36 103
     comando_sem_rotulo (86)
         à esquerda: 48 49 50 51 52 53 54 55
         à direita: 45 46 57 72 73 77
@@ -2077,11 +2073,9 @@ Estado 173
 
     ELSE  deslocar, e ir ao estado 179
 
-    ELSE     [reduzir usando a regra 47 (comando_vazio)]
-    $padrão  reduzir usando a regra 47 (comando_vazio)
+    $padrão  reduzir usando a regra 74 (else_ou_vazio)
 
-    comando_vazio  ir ao estado 180
-    else_ou_vazio  ir ao estado 181
+    else_ou_vazio  ir ao estado 180
 
 
 Estado 174
@@ -2095,7 +2089,7 @@ Estado 175
 
    67 chama_procedimento: $@16 ABRE_PARENTESES $@17 lista_expressoes • FECHA_PARENTESES
 
-    FECHA_PARENTESES  deslocar, e ir ao estado 182
+    FECHA_PARENTESES  deslocar, e ir ao estado 181
 
 
 Estado 176
@@ -2106,7 +2100,7 @@ Estado 176
     FECHA_PARENTESES  reduzir usando a regra 80 (lista_expressoes)
     $padrão           reduzir usando a regra 78 ($@22)
 
-    $@22  ir ao estado 183
+    $@22  ir ao estado 182
 
 
 Estado 177
@@ -2137,7 +2131,7 @@ Estado 179
     WRITE    deslocar, e ir ao estado 58
 
     comando_composto     ir ao estado 59
-    comando_sem_rotulo   ir ao estado 184
+    comando_sem_rotulo   ir ao estado 183
     label_goto           ir ao estado 62
     atribuicao_proc      ir ao estado 63
     desvio               ir ao estado 64
@@ -2149,40 +2143,33 @@ Estado 179
 
 Estado 180
 
-   74 else_ou_vazio: comando_vazio •
-
-    $padrão  reduzir usando a regra 74 (else_ou_vazio)
-
-
-Estado 181
-
    72 comando_condicional: IF expressao $@18 THEN comando_sem_rotulo $@19 else_ou_vazio •
 
     $padrão  reduzir usando a regra 72 (comando_condicional)
 
 
-Estado 182
+Estado 181
 
    67 chama_procedimento: $@16 ABRE_PARENTESES $@17 lista_expressoes FECHA_PARENTESES •
 
     $padrão  reduzir usando a regra 67 (chama_procedimento)
 
 
-Estado 183
+Estado 182
 
    79 lista_expressoes: expressao $@22 • VIRGULA lista_expressoes
 
-    VIRGULA  deslocar, e ir ao estado 185
+    VIRGULA  deslocar, e ir ao estado 184
 
 
-Estado 184
+Estado 183
 
    73 else_ou_vazio: ELSE comando_sem_rotulo •
 
     $padrão  reduzir usando a regra 73 (else_ou_vazio)
 
 
-Estado 185
+Estado 184
 
    79 lista_expressoes: expressao $@22 VIRGULA • lista_expressoes
 
@@ -2191,13 +2178,13 @@ Estado 185
 
     $padrão  reduzir usando a regra 93 (mais_menos_vazio)
 
-    lista_expressoes   ir ao estado 186
+    lista_expressoes   ir ao estado 185
     expressao          ir ao estado 176
     expressao_simples  ir ao estado 82
     mais_menos_vazio   ir ao estado 83
 
 
-Estado 186
+Estado 185
 
    79 lista_expressoes: expressao $@22 VIRGULA lista_expressoes •
 

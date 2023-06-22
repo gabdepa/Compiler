@@ -150,11 +150,10 @@ parte_declara_rotulo:
    LABEL lista_labels PONTO_E_VIRGULA| comando_vazio
             ;
 lista_labels: lista_labels VIRGULA ident_labels
-| ident_labels {printf("VOLTEI \n");};
+| ident_labels;
 
 ident_labels:  NUMERO 
                {
-                  printf("CRIANDO SIMBOLO %s",token);
                   s = cria_simbolo(token, LABEL_S, nivel_lex, ti); 
                   insere_tabela(&ts, s);
                };
@@ -569,7 +568,6 @@ desvio: GOTO NUMERO{
     if <expressão> then <comando sem rótulo>
         [else <comando sem rótulo>] 
 */
-
 comando_condicional: IF 
    expressao {
                         if ($2 != BOOLEAN_S){
@@ -592,14 +590,14 @@ comando_condicional: IF
                         geraCodigo(rot_str, "NADA");
 
                      } 
-                     else_ou_vazio
-;
-
-else_ou_vazio: ELSE comando_sem_rotulo {
+                     else_ou_vazio {
                         sprintf(rot_str, "R%02d", pilha_rotulos_topo(&pilha_rotulos));
                         geraCodigo(rot_str, "NADA");
                         pilha_rotulos_desempilhar(&pilha_rotulos);
-                     } | comando_vazio;
+                     }
+;
+
+else_ou_vazio: ELSE comando_sem_rotulo  | %prec LOWER_THEN_ELSE;
 
 /* 
    REGRA 23
