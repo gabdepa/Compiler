@@ -42,17 +42,17 @@ typedef struct procedimento{
 } procedimento;
 
 /*------------------------*/
-typedef struct cat_conteudo{
+typedef struct tipo_conteudo{
     variavel var;
     parametro param;
     procedimento proc;
-} cat_conteudo;
+} tipo_conteudo;
 
 typedef struct simbolo_t{
     char *identificador;
     int categoria;
     int nivel;
-    cat_conteudo conteudo; // conteudo do simbolo contem variavel | parametro | procedimento
+    tipo_conteudo conteudo; // conteudo do simbolo contem variavel | parametro | procedimento
 } simbolo_t;
 
 
@@ -62,7 +62,7 @@ typedef struct tabela_de_simbolos_t{
     unsigned int tam;
 }tabela_de_simbolos_t;
 
-simbolo_t cria_simbolo(char *ident, int cat, int niv, cat_conteudo tipo);
+simbolo_t cria_simbolo(char *ident, int cat, int niv, tipo_conteudo tipo);
 void inicializa(tabela_de_simbolos_t **ts);
 void insere_tabela(tabela_de_simbolos_t **ts, simbolo_t);
 simbolo_t pop(tabela_de_simbolos_t **ts) ;

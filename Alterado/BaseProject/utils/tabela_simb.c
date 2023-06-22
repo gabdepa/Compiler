@@ -11,7 +11,7 @@ void inicializa(tabela_de_simbolos_t **ts){
     (*ts)->tam = 1;
 }
 
-simbolo_t cria_simbolo(char *ident, int cat, int niv, struct cat_conteudo conteudo){
+simbolo_t cria_simbolo(char *ident, int cat, int niv,  tipo_conteudo conteudo){
     simbolo_t s;
     s.identificador = malloc(strlen(ident)+1); 
     strcpy(s.identificador, ident);

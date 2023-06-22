@@ -1,0 +1,112 @@
+As alterações realizadas estão lsitadas abaixa conforme diferenças entre arquivo original Alterações realizadas :
+
+Adição [ <parte de declarações de rotulos> ] na regra 2. 
+
+Adicionada regra 3
+adicionado simbolo de label nos tipos definidos para simbolos. 
+
+Adição da regra 21
+
+Ao encontrar um goto na regra 21, seu compilador deverá gera DSVR OK 
+
+adição regra 17
+
+
+
+Alterações realizadas no código do compilador.y 
+
+Não utilizada pois não é necessário o amem para a declaração dos rótulos. 
+< int num_rotulos; // variavel auxiliar para guardar o numero de rotulos declarados
+117d115
+
+Adição da REGRA 3 - parte de declaração de rótulos, a qual também foi inserida na regra REGRA 02 - bloco. 
+<               parte_declara_rotulo
+144,160d141
+< /*
+<    REGRA 3
+<    <parte de declarações de rótulos> ::=
+<       label <número> {, <número>}; 
+< */
+< parte_declara_rotulo:
+<    LABEL lista_labels PONTO_E_VIRGULA| comando_vazio
+<             ;
+
+Adição de regras auxiliares para declaração de uma lista de rótulos na chamada label: 
+
+< lista_labels: lista_labels VIRGULA ident_labels
+< | ident_labels;
+< 
+< ident_labels:  NUMERO 
+<                {
+<                   s = cria_simbolo(token, LABEL_S, nivel_lex, ti); 
+<                   insere_tabela(&ts, s);
+<                };
+
+Adição das regras de desvio e label_goto na  REGRA 18 - comando_sem_rotulo. 
+
+comando_sem_rotulo: 
+                  atribuicao_proc
+<                 | label_goto 
+<                 | desvio 
+                  | comando_composto
+                  | comando_condicional
+                  | comando_repetitivo 
+                  | escrita
+                  | leitura
+
+Adição de regra label_goto para a declaração da label que efetua o goto para o NUMERO do token passado entre a lista de rotulos posterior ao token LABEL. 
+< label_goto: 
+<       NUMERO
+<       {
+<       sptr = busca_simbolo(&ts, token);
+<       if(!sptr){
+<          fprintf(stderr, "ERRO:\n Rotulo do goto nao existe\n"); 
+<          exit(1);
+<       }
+<       // ENRT k, n
+<       // k é o nível léxico
+<       // corrente e n é o número de variáveis locais do procedimento corrente
+<       sprintf(buffer_mepa, "ENRT %d, %d", nivel_lex, num_vars);
+<       geraCodigo(NULL, buffer_mepa);
+<    } DOIS_PONTOS comando_sem_rotulo; 
+< 
+Adição de regra REGRA 21 - desvio para que quando receber o token GOTO vá para o NUMERO indicado, se declarado e esse estiver acessível no local da chamada. 
+
+<    REGRA 21. 
+<       <desvios> ::= goto <número>
+< desvio: GOTO NUMERO{
+<    sptr = busca_simbolo(&ts, token);
+<    if(!sptr){
+<       fprintf(stderr, "ERRO: Rótulo do goto não existe!\n"); 
+<       exit(1);
+<    }
+<    if(sptr->nivel > nivel_lex)
+<    {
+<       fprintf(stderr, "ERRO: Rótulo não encontrado!\n"); 
+<       exit(1);
+<    }
+<    sprintf(buffer_mepa, "DSVR %d, %d, %d", atoi(sptr->identificador),sptr->nivel, nivel_lex); // 
+<    geraCodigo(NULL, buffer_mepa);
+< } ;
+
+
+
+< 
+< /*
+573,574c513
+< comando_condicional: IF 
+<    expressao {
+---
+> comando_condicional: IF expressao {
+595,598c534,535
+<                      else_ou_vazio
+< ;
+< 
+< else_ou_vazio: ELSE comando_sem_rotulo {
+---
+>                      ELSE comando_sem_rotulo
+>                      {
+602c539,540
+<                      } | comando_vazio;
+---
+>                      } 

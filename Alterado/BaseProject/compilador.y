@@ -32,10 +32,10 @@ char buffer_mepa[128], proc_name[128], idents[128][128];
 tabela_de_simbolos_t *ts, *pilha_atribuicao;
 simbolo_t s, *sptr, *sptr_var_proc, *sptr_chamada_proc, *sptr_atribuicao, proc_atual, lista_simbolos[128];
 
-struct pilha_rotulos pilha_rotulos, pilha_amem, pilha_procs; // pilha para o rotulo, calculo dos amem e para os procedimentos
-struct pilha_tipos pilha_ident_esquerdo;
-struct parametro lista_parametros[128]; 
-struct cat_conteudo ti;
+pilha_rotulos pilha_rot, pilha_amem, pilha_procs; // pilha para o rotulo, calculo dos amem e para os procedimentos
+pilha_tipos pilha_ident_esquerdo;
+parametro lista_parametros[128]; 
+tipo_conteudo ti;
 
 int str2token(const char *str){
    if (!strcmp(str, "integer")) return INTEGER_S;
@@ -119,7 +119,7 @@ bloco       :
               {
                sprintf(buffer_mepa, "DSVS R%02d", proc_subnivel);
                geraCodigo(NULL, buffer_mepa);
-               pilha_rotulos_empilhar(&pilha_rotulos, proc_subnivel);
+               pilha_rotulos_empilhar(&pilha_rot, proc_subnivel);
                proc_subnivel++;
                nivel_lex++;
                num_subprocs_proc_atual = 0;
@@ -129,9 +129,9 @@ bloco       :
                pilha_rotulos_empilhar(&pilha_procs, num_subprocs_proc_atual);
                nivel_lex--;
 
-               sprintf(rot_str, "R%02d", pilha_rotulos_topo(&pilha_rotulos));
+               sprintf(rot_str, "R%02d", pilha_rotulos_topo(&pilha_rot));
                geraCodigo(rot_str, "NADA");
-               pilha_rotulos_desempilhar(&pilha_rotulos);
+               pilha_rotulos_desempilhar(&pilha_rot);
               }
               comando_composto
               {
@@ -268,7 +268,7 @@ declara_proc: PROCEDURE
                
                ti.proc.rotulo = proc_subnivel;
                ti.proc.qtd_parametros = num_params;
-               memcpy(ti.proc.lista, lista_parametros, sizeof(struct parametro)*num_params);
+               memcpy(ti.proc.lista, lista_parametros, sizeof(parametro)*num_params);
                s = cria_simbolo(proc_name, PROCEDIMENTO_S, nivel_lex, ti);
                insere_tabela(&ts, s);
 
@@ -318,7 +318,7 @@ declara_func: FUNCTION
                geraCodigo(rot_str, buffer_mepa);
                ti.proc.rotulo = proc_subnivel;
                ti.proc.qtd_parametros = num_params;
-               memcpy(ti.proc.lista, lista_parametros, sizeof(struct parametro)*num_params);
+               memcpy(ti.proc.lista, lista_parametros, sizeof(parametro)*num_params);
                ti.var.tipo = $6;
                ti.var.deslocamento = -TAM_INT - num_params;
                s = cria_simbolo(proc_name, FUNCAO_S, nivel_lex, ti);
@@ -578,22 +578,22 @@ comando_condicional: IF
                         sprintf(buffer_mepa, "DSVF R%02d", proc_subnivel+1);
                         geraCodigo(NULL, buffer_mepa);
 
-                        pilha_rotulos_empilhar(&pilha_rotulos, proc_subnivel);
+                        pilha_rotulos_empilhar(&pilha_rot, proc_subnivel);
                         proc_subnivel += 2;
                      }  
                      THEN
                      comando_sem_rotulo {
-                        sprintf(buffer_mepa, "DSVS R%02d", pilha_rotulos_topo(&pilha_rotulos));
+                        sprintf(buffer_mepa, "DSVS R%02d", pilha_rotulos_topo(&pilha_rot));
                         geraCodigo(NULL, buffer_mepa);
 
-                        sprintf(rot_str, "R%02d", pilha_rotulos_topo(&pilha_rotulos)+1);
+                        sprintf(rot_str, "R%02d", pilha_rotulos_topo(&pilha_rot)+1);
                         geraCodigo(rot_str, "NADA");
 
                      } 
                      else_ou_vazio {
-                        sprintf(rot_str, "R%02d", pilha_rotulos_topo(&pilha_rotulos));
+                        sprintf(rot_str, "R%02d", pilha_rotulos_topo(&pilha_rot));
                         geraCodigo(rot_str, "NADA");
-                        pilha_rotulos_desempilhar(&pilha_rotulos);
+                        pilha_rotulos_desempilhar(&pilha_rot);
                      }
 ;
 
@@ -605,23 +605,23 @@ else_ou_vazio: ELSE comando_sem_rotulo  | %prec LOWER_THEN_ELSE;
       while <expressão> do <comando sem rótulo> 
 */
 comando_repetitivo:  WHILE {
-                        pilha_rotulos_empilhar(&pilha_rotulos, proc_subnivel);
+                        pilha_rotulos_empilhar(&pilha_rot, proc_subnivel);
                          
                         sprintf(rot_str, "R%02d", proc_subnivel);
                         geraCodigo(rot_str, "NADA");
                         proc_subnivel += 2;
                      }
                      expressao {
-                        sprintf(buffer_mepa, "DSVF R%02d", pilha_rotulos_topo(&pilha_rotulos)+1);
+                        sprintf(buffer_mepa, "DSVF R%02d", pilha_rotulos_topo(&pilha_rot)+1);
                         geraCodigo(NULL, buffer_mepa); 
                      }
                      DO 
                      comando_sem_rotulo {
-                        sprintf(buffer_mepa, "DSVS R%02d", pilha_rotulos_topo(&pilha_rotulos));
+                        sprintf(buffer_mepa, "DSVS R%02d", pilha_rotulos_topo(&pilha_rot));
                         geraCodigo(NULL, buffer_mepa);
-                        sprintf(rot_str, "R%02d", pilha_rotulos_topo(&pilha_rotulos)+1);
+                        sprintf(rot_str, "R%02d", pilha_rotulos_topo(&pilha_rot)+1);
                         geraCodigo(rot_str, "NADA");
-                        pilha_rotulos_desempilhar(&pilha_rotulos);
+                        pilha_rotulos_desempilhar(&pilha_rot);
                      }
 ;
 
@@ -915,7 +915,7 @@ int main (int argc, char** argv) {
  * ------------------------------------------------------------------- */
    inicializa(&ts);
    inicializa(&pilha_atribuicao);
-   pilha_rotulos_inicializar(&pilha_rotulos);
+   pilha_rotulos_inicializar(&pilha_rot);
    pilha_rotulos_inicializar(&pilha_amem);
    pilha_rotulos_inicializar(&pilha_procs);
    pilha_tipos_inicializar(&pilha_ident_esquerdo);
@@ -923,7 +923,7 @@ int main (int argc, char** argv) {
    yyin=fp;
    yyparse();
 
-   pilha_rotulos_destruir(&pilha_rotulos);
+   pilha_rotulos_destruir(&pilha_rot);
    pilha_rotulos_destruir(&pilha_amem);
    pilha_rotulos_destruir(&pilha_procs);
    pilha_tipos_destruir(&pilha_ident_esquerdo);

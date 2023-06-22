@@ -4,13 +4,13 @@
 
 #include "pilha_rotulos.h"
 
-void pilha_rotulos_inicializar(struct pilha_rotulos *p){
+void pilha_rotulos_inicializar( pilha_rotulos *p){
     p->p = NULL;
     p->tam = 0;
     p->topo = 0;
 }
 
-void pilha_rotulos_empilhar(struct pilha_rotulos *p, const int num){
+void pilha_rotulos_empilhar( pilha_rotulos *p, const int num){
 
     if (p->topo == p->tam){
         int *auxptr = NULL;
@@ -25,7 +25,7 @@ void pilha_rotulos_empilhar(struct pilha_rotulos *p, const int num){
     p->p[p->topo++] = num;
 }
 
-int pilha_rotulos_topo(struct pilha_rotulos *p){
+int pilha_rotulos_topo( pilha_rotulos *p){
     if (p->topo > 0)
         return p->p[p->topo-1];
     else {
@@ -35,15 +35,15 @@ int pilha_rotulos_topo(struct pilha_rotulos *p){
     return 0;
 }
 
-int pilha_rotulos_vazia(struct pilha_rotulos *p){
+int pilha_rotulos_vazia( pilha_rotulos *p){
     return p->topo == 0;
 }
 
-void pilha_rotulos_desempilhar(struct pilha_rotulos *p){
+void pilha_rotulos_desempilhar( pilha_rotulos *p){
     p->topo--;
 }
 
-void pilha_rotulos_destruir(struct pilha_rotulos *p){
+void pilha_rotulos_destruir( pilha_rotulos *p){
     p->topo = 0;
     p->tam = 0;
     free(p->p);
