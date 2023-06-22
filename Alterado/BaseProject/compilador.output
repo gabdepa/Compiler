@@ -1,0 +1,2140 @@
+Terminais sem uso na gramática
+
+    LABEL
+    TYPE
+    ARRAY
+    OF
+    ABRE_COLCHETES
+    FECHA_COLCHETES
+    ABRE_CHAVES
+    FECHA_CHAVES
+    LOWER_THEN_ELSE
+
+
+Gramática
+
+    0 $accept: programa $end
+
+    1 $@1: %empty
+
+    2 programa: PROGRAM IDENT $@1 ABRE_PARENTESES lista_idents FECHA_PARENTESES PONTO_E_VIRGULA bloco PONTO
+
+    3 $@2: %empty
+
+    4 $@3: %empty
+
+    5 bloco: parte_declara_rotulo parte_declara_vars $@2 parte_declara_subrotinas $@3 comando_composto
+
+    6 parte_declara_rotulo: NUMERO lista_labels
+    7                     | comando_vazio
+
+    8 lista_labels: lista_labels VIRGULA ident_labels
+    9             | ident_labels
+
+   10 ident_labels: NUMERO
+
+   11 tipo: TIPO
+
+   12 $@4: %empty
+
+   13 parte_declara_vars: $@4 VAR declara_vars
+   14                   | %empty
+
+   15 declara_vars: declara_vars declara_var
+   16             | declara_var
+
+   17 $@5: %empty
+
+   18 $@6: %empty
+
+   19 declara_var: $@5 lista_id_var DOIS_PONTOS tipo $@6 PONTO_E_VIRGULA
+
+   20 lista_id_var: lista_id_var VIRGULA IDENT
+   21             | IDENT
+
+   22 lista_idents: lista_idents VIRGULA ident_params
+   23             | ident_params
+
+   24 ident_params: IDENT
+
+   25 $@7: %empty
+
+   26 parte_declara_subrotinas: parte_declara_subrotinas declara_proc $@7 PONTO_E_VIRGULA
+   27                         | parte_declara_subrotinas declara_func PONTO_E_VIRGULA
+   28                         | comando_vazio
+
+   29 $@8: %empty
+
+   30 $@9: %empty
+
+   31 declara_proc: PROCEDURE IDENT $@8 parametros_formais_ou_vazio $@9 PONTO_E_VIRGULA bloco
+
+   32 $@10: %empty
+
+   33 $@11: %empty
+
+   34 declara_func: FUNCTION IDENT $@10 parametros_formais_ou_vazio DOIS_PONTOS tipo $@11 PONTO_E_VIRGULA bloco
+
+   35 parametros_formais_ou_vazio: parametros_formais
+   36                            | comando_vazio
+
+   37 parametros_formais: ABRE_PARENTESES parametros FECHA_PARENTESES
+
+   38 parametros: parametros PONTO_E_VIRGULA secao_parametros_formais
+   39           | secao_parametros_formais
+
+   40 $@12: %empty
+
+   41 secao_parametros_formais: var_ou_vazio $@12 lista_idents DOIS_PONTOS tipo
+
+   42 var_ou_vazio: VAR
+   43             | %empty
+
+   44 comando_composto: T_BEGIN comandos T_END
+
+   45 $@13: %empty
+
+   46 comandos: NUMERO $@13 comando_sem_rotulo
+   47         | comando_sem_rotulo
+   48         | comandos PONTO_E_VIRGULA comando_sem_rotulo
+
+   49 comando_vazio: %empty
+
+   50 comando_sem_rotulo: atribuicao_proc
+   51                   | desvio
+   52                   | comando_composto
+   53                   | comando_condicional
+   54                   | comando_repetitivo
+   55                   | escrita
+   56                   | leitura
+
+   57 $@14: %empty
+
+   58 atribuicao_proc: IDENT $@14 a_continua
+
+   59 $@15: %empty
+
+   60 a_continua: ATRIBUICAO $@15 atribuicao
+   61           | procedimento_sem_parametro
+   62           | chama_procedimento
+
+   63 atribuicao: expressao
+
+   64 $@16: %empty
+
+   65 $@17: %empty
+
+   66 chama_procedimento: $@16 ABRE_PARENTESES $@17 lista_expressoes FECHA_PARENTESES
+
+   67 procedimento_sem_parametro: %empty
+
+   68 desvio: GOTO NUMERO
+
+   69 $@18: %empty
+
+   70 $@19: %empty
+
+   71 comando_condicional: IF expressao $@18 THEN comando_sem_rotulo $@19 ELSE comando_sem_rotulo
+
+   72 $@20: %empty
+
+   73 $@21: %empty
+
+   74 comando_repetitivo: WHILE $@20 expressao $@21 DO comando_sem_rotulo
+
+   75 $@22: %empty
+
+   76 lista_expressoes: expressao $@22 VIRGULA lista_expressoes
+   77                 | expressao
+
+   78 expressao: expressao_simples
+   79          | expressao_simples relacao expressao_simples
+
+   80 relacao: IGUAL
+   81        | DIFERENTE
+   82        | MENOR
+   83        | MENOR_IGUAL
+   84        | MAIOR_IGUAL
+   85        | MAIOR
+
+   86 expressao_simples: expressao_simples mais_menos_or termo
+   87                  | mais_menos_vazio termo
+
+   88 mais_menos_vazio: MAIS
+   89                 | MENOS
+   90                 | %empty
+
+   91 mais_menos_or: MAIS
+   92              | MENOS
+   93              | OR
+
+   94 termo: termo vezes_div_and fator
+   95      | fator
+
+   96 vezes_div_and: VEZES
+   97              | DIV
+   98              | AND
+
+   99 procedimento_ou_vazio: chama_procedimento
+  100                      | comando_vazio
+
+  101 fator: variavel procedimento_ou_vazio
+  102      | numero
+  103      | VALOR_BOOL
+  104      | ABRE_PARENTESES expressao FECHA_PARENTESES
+  105      | NOT fator
+
+  106 variavel: IDENT
+
+  107 numero: NUMERO
+
+  108 leitura: READ ABRE_PARENTESES leitura_itens FECHA_PARENTESES
+
+  109 leitura_itens: leitura_itens VIRGULA item_leitura
+  110              | item_leitura
+
+  111 item_leitura: IDENT
+
+  112 escrita: WRITE ABRE_PARENTESES escreve_itens FECHA_PARENTESES
+
+  113 escreve_itens: escreve_itens VIRGULA expressao
+  114              | expressao
+
+
+Terminais, com as regras onde eles aparecem
+
+    $end (0) 0
+    error (256)
+    PROGRAM (258) 2
+    LABEL (259)
+    TYPE (260)
+    ARRAY (261)
+    OF (262)
+    VAR (263) 13 42
+    PROCEDURE (264) 31
+    FUNCTION (265) 34
+    T_BEGIN (266) 44
+    T_END (267) 44
+    GOTO (268) 68
+    IF (269) 71
+    THEN (270) 71
+    ELSE (271) 71
+    WHILE (272) 74
+    DO (273) 74
+    OR (274) 93
+    AND (275) 98
+    NOT (276) 105
+    DIV (277) 97
+    ATRIBUICAO (278) 60
+    PONTO_E_VIRGULA (279) 2 19 26 27 31 34 38 48
+    DOIS_PONTOS (280) 19 34 41
+    VIRGULA (281) 8 20 22 76 109 113
+    PONTO (282) 2
+    ABRE_PARENTESES (283) 2 37 66 104 108 112
+    FECHA_PARENTESES (284) 2 37 66 104 108 112
+    ABRE_COLCHETES (285)
+    FECHA_COLCHETES (286)
+    ABRE_CHAVES (287)
+    FECHA_CHAVES (288)
+    IDENT (289) 2 20 21 24 31 34 58 106 111
+    MAIOR (290) 85
+    MENOR (291) 82
+    IGUAL (292) 80
+    MAIS (293) 88 91
+    MENOS (294) 89 92
+    VEZES (295) 96
+    NUMERO (296) 6 10 46 68 107
+    DIFERENTE (297) 81
+    MENOR_IGUAL (298) 83
+    MAIOR_IGUAL (299) 84
+    VALOR_BOOL (300) 103
+    TIPO (301) 11
+    READ (302) 108
+    WRITE (303) 112
+    LOWER_THEN_ELSE (304)
+
+
+Não terminais com as regras onde eles aparecem
+
+    $accept (50)
+        à esquerda: 0
+    programa (51)
+        à esquerda: 2
+        à direita: 0
+    $@1 (52)
+        à esquerda: 1
+        à direita: 2
+    bloco (53)
+        à esquerda: 5
+        à direita: 2 31 34
+    $@2 (54)
+        à esquerda: 3
+        à direita: 5
+    $@3 (55)
+        à esquerda: 4
+        à direita: 5
+    parte_declara_rotulo (56)
+        à esquerda: 6 7
+        à direita: 5
+    lista_labels (57)
+        à esquerda: 8 9
+        à direita: 6 8
+    ident_labels (58)
+        à esquerda: 10
+        à direita: 8 9
+    tipo <int_value> (59)
+        à esquerda: 11
+        à direita: 19 34 41
+    parte_declara_vars (60)
+        à esquerda: 13 14
+        à direita: 5
+    $@4 (61)
+        à esquerda: 12
+        à direita: 13
+    declara_vars (62)
+        à esquerda: 15 16
+        à direita: 13 15
+    declara_var (63)
+        à esquerda: 19
+        à direita: 15 16
+    $@5 (64)
+        à esquerda: 17
+        à direita: 19
+    $@6 (65)
+        à esquerda: 18
+        à direita: 19
+    lista_id_var (66)
+        à esquerda: 20 21
+        à direita: 19 20
+    lista_idents (67)
+        à esquerda: 22 23
+        à direita: 2 22 41
+    ident_params (68)
+        à esquerda: 24
+        à direita: 22 23
+    parte_declara_subrotinas (69)
+        à esquerda: 26 27 28
+        à direita: 5 26 27
+    $@7 (70)
+        à esquerda: 25
+        à direita: 26
+    declara_proc (71)
+        à esquerda: 31
+        à direita: 26
+    $@8 (72)
+        à esquerda: 29
+        à direita: 31
+    $@9 (73)
+        à esquerda: 30
+        à direita: 31
+    declara_func (74)
+        à esquerda: 34
+        à direita: 27
+    $@10 (75)
+        à esquerda: 32
+        à direita: 34
+    $@11 (76)
+        à esquerda: 33
+        à direita: 34
+    parametros_formais_ou_vazio (77)
+        à esquerda: 35 36
+        à direita: 31 34
+    parametros_formais (78)
+        à esquerda: 37
+        à direita: 35
+    parametros (79)
+        à esquerda: 38 39
+        à direita: 37 38
+    secao_parametros_formais (80)
+        à esquerda: 41
+        à direita: 38 39
+    $@12 (81)
+        à esquerda: 40
+        à direita: 41
+    var_ou_vazio (82)
+        à esquerda: 42 43
+        à direita: 41
+    comando_composto (83)
+        à esquerda: 44
+        à direita: 5 52
+    comandos (84)
+        à esquerda: 46 47 48
+        à direita: 44 48
+    $@13 (85)
+        à esquerda: 45
+        à direita: 46
+    comando_vazio (86)
+        à esquerda: 49
+        à direita: 7 28 36 100
+    comando_sem_rotulo (87)
+        à esquerda: 50 51 52 53 54 55 56
+        à direita: 46 47 48 71 74
+    atribuicao_proc (88)
+        à esquerda: 58
+        à direita: 50
+    $@14 (89)
+        à esquerda: 57
+        à direita: 58
+    a_continua (90)
+        à esquerda: 60 61 62
+        à direita: 58
+    $@15 (91)
+        à esquerda: 59
+        à direita: 60
+    atribuicao (92)
+        à esquerda: 63
+        à direita: 60
+    chama_procedimento (93)
+        à esquerda: 66
+        à direita: 62 99
+    $@16 (94)
+        à esquerda: 64
+        à direita: 66
+    $@17 (95)
+        à esquerda: 65
+        à direita: 66
+    procedimento_sem_parametro (96)
+        à esquerda: 67
+        à direita: 61
+    desvio (97)
+        à esquerda: 68
+        à direita: 51
+    comando_condicional (98)
+        à esquerda: 71
+        à direita: 53
+    $@18 (99)
+        à esquerda: 69
+        à direita: 71
+    $@19 (100)
+        à esquerda: 70
+        à direita: 71
+    comando_repetitivo (101)
+        à esquerda: 74
+        à direita: 54
+    $@20 (102)
+        à esquerda: 72
+        à direita: 74
+    $@21 (103)
+        à esquerda: 73
+        à direita: 74
+    lista_expressoes (104)
+        à esquerda: 76 77
+        à direita: 66 76
+    $@22 (105)
+        à esquerda: 75
+        à direita: 76
+    expressao <int_value> (106)
+        à esquerda: 78 79
+        à direita: 63 71 74 76 77 104 113 114
+    relacao <str_value> (107)
+        à esquerda: 80 81 82 83 84 85
+        à direita: 79
+    expressao_simples <int_value> (108)
+        à esquerda: 86 87
+        à direita: 78 79 86
+    mais_menos_vazio <str_value> (109)
+        à esquerda: 88 89 90
+        à direita: 87
+    mais_menos_or <str_value> (110)
+        à esquerda: 91 92 93
+        à direita: 86
+    termo <int_value> (111)
+        à esquerda: 94 95
+        à direita: 86 87 94
+    vezes_div_and <str_value> (112)
+        à esquerda: 96 97 98
+        à direita: 94
+    procedimento_ou_vazio (113)
+        à esquerda: 99 100
+        à direita: 101
+    fator <int_value> (114)
+        à esquerda: 101 102 103 104 105
+        à direita: 94 95 105
+    variavel <int_value> (115)
+        à esquerda: 106
+        à direita: 101
+    numero <int_value> (116)
+        à esquerda: 107
+        à direita: 102
+    leitura (117)
+        à esquerda: 108
+        à direita: 56
+    leitura_itens (118)
+        à esquerda: 109 110
+        à direita: 108 109
+    item_leitura (119)
+        à esquerda: 111
+        à direita: 109 110
+    escrita (120)
+        à esquerda: 112
+        à direita: 55
+    escreve_itens (121)
+        à esquerda: 113 114
+        à direita: 112 113
+
+
+Estado 0
+
+    0 $accept: • programa $end
+
+    PROGRAM  deslocar, e ir ao estado 1
+
+    programa  ir ao estado 2
+
+
+Estado 1
+
+    2 programa: PROGRAM • IDENT $@1 ABRE_PARENTESES lista_idents FECHA_PARENTESES PONTO_E_VIRGULA bloco PONTO
+
+    IDENT  deslocar, e ir ao estado 3
+
+
+Estado 2
+
+    0 $accept: programa • $end
+
+    $end  deslocar, e ir ao estado 4
+
+
+Estado 3
+
+    2 programa: PROGRAM IDENT • $@1 ABRE_PARENTESES lista_idents FECHA_PARENTESES PONTO_E_VIRGULA bloco PONTO
+
+    $padrão  reduzir usando a regra 1 ($@1)
+
+    $@1  ir ao estado 5
+
+
+Estado 4
+
+    0 $accept: programa $end •
+
+    $padrão  aceitar
+
+
+Estado 5
+
+    2 programa: PROGRAM IDENT $@1 • ABRE_PARENTESES lista_idents FECHA_PARENTESES PONTO_E_VIRGULA bloco PONTO
+
+    ABRE_PARENTESES  deslocar, e ir ao estado 6
+
+
+Estado 6
+
+    2 programa: PROGRAM IDENT $@1 ABRE_PARENTESES • lista_idents FECHA_PARENTESES PONTO_E_VIRGULA bloco PONTO
+
+    IDENT  deslocar, e ir ao estado 7
+
+    lista_idents  ir ao estado 8
+    ident_params  ir ao estado 9
+
+
+Estado 7
+
+   24 ident_params: IDENT •
+
+    $padrão  reduzir usando a regra 24 (ident_params)
+
+
+Estado 8
+
+    2 programa: PROGRAM IDENT $@1 ABRE_PARENTESES lista_idents • FECHA_PARENTESES PONTO_E_VIRGULA bloco PONTO
+   22 lista_idents: lista_idents • VIRGULA ident_params
+
+    VIRGULA           deslocar, e ir ao estado 10
+    FECHA_PARENTESES  deslocar, e ir ao estado 11
+
+
+Estado 9
+
+   23 lista_idents: ident_params •
+
+    $padrão  reduzir usando a regra 23 (lista_idents)
+
+
+Estado 10
+
+   22 lista_idents: lista_idents VIRGULA • ident_params
+
+    IDENT  deslocar, e ir ao estado 7
+
+    ident_params  ir ao estado 12
+
+
+Estado 11
+
+    2 programa: PROGRAM IDENT $@1 ABRE_PARENTESES lista_idents FECHA_PARENTESES • PONTO_E_VIRGULA bloco PONTO
+
+    PONTO_E_VIRGULA  deslocar, e ir ao estado 13
+
+
+Estado 12
+
+   22 lista_idents: lista_idents VIRGULA ident_params •
+
+    $padrão  reduzir usando a regra 22 (lista_idents)
+
+
+Estado 13
+
+    2 programa: PROGRAM IDENT $@1 ABRE_PARENTESES lista_idents FECHA_PARENTESES PONTO_E_VIRGULA • bloco PONTO
+
+    NUMERO  deslocar, e ir ao estado 14
+
+    $padrão  reduzir usando a regra 49 (comando_vazio)
+
+    bloco                 ir ao estado 15
+    parte_declara_rotulo  ir ao estado 16
+    comando_vazio         ir ao estado 17
+
+
+Estado 14
+
+    6 parte_declara_rotulo: NUMERO • lista_labels
+
+    NUMERO  deslocar, e ir ao estado 18
+
+    lista_labels  ir ao estado 19
+    ident_labels  ir ao estado 20
+
+
+Estado 15
+
+    2 programa: PROGRAM IDENT $@1 ABRE_PARENTESES lista_idents FECHA_PARENTESES PONTO_E_VIRGULA bloco • PONTO
+
+    PONTO  deslocar, e ir ao estado 21
+
+
+Estado 16
+
+    5 bloco: parte_declara_rotulo • parte_declara_vars $@2 parte_declara_subrotinas $@3 comando_composto
+
+    VAR      reduzir usando a regra 12 ($@4)
+    $padrão  reduzir usando a regra 14 (parte_declara_vars)
+
+    parte_declara_vars  ir ao estado 22
+    $@4                 ir ao estado 23
+
+
+Estado 17
+
+    7 parte_declara_rotulo: comando_vazio •
+
+    $padrão  reduzir usando a regra 7 (parte_declara_rotulo)
+
+
+Estado 18
+
+   10 ident_labels: NUMERO •
+
+    $padrão  reduzir usando a regra 10 (ident_labels)
+
+
+Estado 19
+
+    6 parte_declara_rotulo: NUMERO lista_labels •
+    8 lista_labels: lista_labels • VIRGULA ident_labels
+
+    VIRGULA  deslocar, e ir ao estado 24
+
+    $padrão  reduzir usando a regra 6 (parte_declara_rotulo)
+
+
+Estado 20
+
+    9 lista_labels: ident_labels •
+
+    $padrão  reduzir usando a regra 9 (lista_labels)
+
+
+Estado 21
+
+    2 programa: PROGRAM IDENT $@1 ABRE_PARENTESES lista_idents FECHA_PARENTESES PONTO_E_VIRGULA bloco PONTO •
+
+    $padrão  reduzir usando a regra 2 (programa)
+
+
+Estado 22
+
+    5 bloco: parte_declara_rotulo parte_declara_vars • $@2 parte_declara_subrotinas $@3 comando_composto
+
+    $padrão  reduzir usando a regra 3 ($@2)
+
+    $@2  ir ao estado 25
+
+
+Estado 23
+
+   13 parte_declara_vars: $@4 • VAR declara_vars
+
+    VAR  deslocar, e ir ao estado 26
+
+
+Estado 24
+
+    8 lista_labels: lista_labels VIRGULA • ident_labels
+
+    NUMERO  deslocar, e ir ao estado 18
+
+    ident_labels  ir ao estado 27
+
+
+Estado 25
+
+    5 bloco: parte_declara_rotulo parte_declara_vars $@2 • parte_declara_subrotinas $@3 comando_composto
+
+    $padrão  reduzir usando a regra 49 (comando_vazio)
+
+    parte_declara_subrotinas  ir ao estado 28
+    comando_vazio             ir ao estado 29
+
+
+Estado 26
+
+   13 parte_declara_vars: $@4 VAR • declara_vars
+
+    $padrão  reduzir usando a regra 17 ($@5)
+
+    declara_vars  ir ao estado 30
+    declara_var   ir ao estado 31
+    $@5           ir ao estado 32
+
+
+Estado 27
+
+    8 lista_labels: lista_labels VIRGULA ident_labels •
+
+    $padrão  reduzir usando a regra 8 (lista_labels)
+
+
+Estado 28
+
+    5 bloco: parte_declara_rotulo parte_declara_vars $@2 parte_declara_subrotinas • $@3 comando_composto
+   26 parte_declara_subrotinas: parte_declara_subrotinas • declara_proc $@7 PONTO_E_VIRGULA
+   27                         | parte_declara_subrotinas • declara_func PONTO_E_VIRGULA
+
+    PROCEDURE  deslocar, e ir ao estado 33
+    FUNCTION   deslocar, e ir ao estado 34
+
+    $padrão  reduzir usando a regra 4 ($@3)
+
+    $@3           ir ao estado 35
+    declara_proc  ir ao estado 36
+    declara_func  ir ao estado 37
+
+
+Estado 29
+
+   28 parte_declara_subrotinas: comando_vazio •
+
+    $padrão  reduzir usando a regra 28 (parte_declara_subrotinas)
+
+
+Estado 30
+
+   13 parte_declara_vars: $@4 VAR declara_vars •
+   15 declara_vars: declara_vars • declara_var
+
+    IDENT    reduzir usando a regra 17 ($@5)
+    $padrão  reduzir usando a regra 13 (parte_declara_vars)
+
+    declara_var  ir ao estado 38
+    $@5          ir ao estado 32
+
+
+Estado 31
+
+   16 declara_vars: declara_var •
+
+    $padrão  reduzir usando a regra 16 (declara_vars)
+
+
+Estado 32
+
+   19 declara_var: $@5 • lista_id_var DOIS_PONTOS tipo $@6 PONTO_E_VIRGULA
+
+    IDENT  deslocar, e ir ao estado 39
+
+    lista_id_var  ir ao estado 40
+
+
+Estado 33
+
+   31 declara_proc: PROCEDURE • IDENT $@8 parametros_formais_ou_vazio $@9 PONTO_E_VIRGULA bloco
+
+    IDENT  deslocar, e ir ao estado 41
+
+
+Estado 34
+
+   34 declara_func: FUNCTION • IDENT $@10 parametros_formais_ou_vazio DOIS_PONTOS tipo $@11 PONTO_E_VIRGULA bloco
+
+    IDENT  deslocar, e ir ao estado 42
+
+
+Estado 35
+
+    5 bloco: parte_declara_rotulo parte_declara_vars $@2 parte_declara_subrotinas $@3 • comando_composto
+
+    T_BEGIN  deslocar, e ir ao estado 43
+
+    comando_composto  ir ao estado 44
+
+
+Estado 36
+
+   26 parte_declara_subrotinas: parte_declara_subrotinas declara_proc • $@7 PONTO_E_VIRGULA
+
+    $padrão  reduzir usando a regra 25 ($@7)
+
+    $@7  ir ao estado 45
+
+
+Estado 37
+
+   27 parte_declara_subrotinas: parte_declara_subrotinas declara_func • PONTO_E_VIRGULA
+
+    PONTO_E_VIRGULA  deslocar, e ir ao estado 46
+
+
+Estado 38
+
+   15 declara_vars: declara_vars declara_var •
+
+    $padrão  reduzir usando a regra 15 (declara_vars)
+
+
+Estado 39
+
+   21 lista_id_var: IDENT •
+
+    $padrão  reduzir usando a regra 21 (lista_id_var)
+
+
+Estado 40
+
+   19 declara_var: $@5 lista_id_var • DOIS_PONTOS tipo $@6 PONTO_E_VIRGULA
+   20 lista_id_var: lista_id_var • VIRGULA IDENT
+
+    DOIS_PONTOS  deslocar, e ir ao estado 47
+    VIRGULA      deslocar, e ir ao estado 48
+
+
+Estado 41
+
+   31 declara_proc: PROCEDURE IDENT • $@8 parametros_formais_ou_vazio $@9 PONTO_E_VIRGULA bloco
+
+    $padrão  reduzir usando a regra 29 ($@8)
+
+    $@8  ir ao estado 49
+
+
+Estado 42
+
+   34 declara_func: FUNCTION IDENT • $@10 parametros_formais_ou_vazio DOIS_PONTOS tipo $@11 PONTO_E_VIRGULA bloco
+
+    $padrão  reduzir usando a regra 32 ($@10)
+
+    $@10  ir ao estado 50
+
+
+Estado 43
+
+   44 comando_composto: T_BEGIN • comandos T_END
+
+    T_BEGIN  deslocar, e ir ao estado 43
+    GOTO     deslocar, e ir ao estado 51
+    IF       deslocar, e ir ao estado 52
+    WHILE    deslocar, e ir ao estado 53
+    IDENT    deslocar, e ir ao estado 54
+    NUMERO   deslocar, e ir ao estado 55
+    READ     deslocar, e ir ao estado 56
+    WRITE    deslocar, e ir ao estado 57
+
+    comando_composto     ir ao estado 58
+    comandos             ir ao estado 59
+    comando_sem_rotulo   ir ao estado 60
+    atribuicao_proc      ir ao estado 61
+    desvio               ir ao estado 62
+    comando_condicional  ir ao estado 63
+    comando_repetitivo   ir ao estado 64
+    leitura              ir ao estado 65
+    escrita              ir ao estado 66
+
+
+Estado 44
+
+    5 bloco: parte_declara_rotulo parte_declara_vars $@2 parte_declara_subrotinas $@3 comando_composto •
+
+    $padrão  reduzir usando a regra 5 (bloco)
+
+
+Estado 45
+
+   26 parte_declara_subrotinas: parte_declara_subrotinas declara_proc $@7 • PONTO_E_VIRGULA
+
+    PONTO_E_VIRGULA  deslocar, e ir ao estado 67
+
+
+Estado 46
+
+   27 parte_declara_subrotinas: parte_declara_subrotinas declara_func PONTO_E_VIRGULA •
+
+    $padrão  reduzir usando a regra 27 (parte_declara_subrotinas)
+
+
+Estado 47
+
+   19 declara_var: $@5 lista_id_var DOIS_PONTOS • tipo $@6 PONTO_E_VIRGULA
+
+    TIPO  deslocar, e ir ao estado 68
+
+    tipo  ir ao estado 69
+
+
+Estado 48
+
+   20 lista_id_var: lista_id_var VIRGULA • IDENT
+
+    IDENT  deslocar, e ir ao estado 70
+
+
+Estado 49
+
+   31 declara_proc: PROCEDURE IDENT $@8 • parametros_formais_ou_vazio $@9 PONTO_E_VIRGULA bloco
+
+    ABRE_PARENTESES  deslocar, e ir ao estado 71
+
+    $padrão  reduzir usando a regra 49 (comando_vazio)
+
+    parametros_formais_ou_vazio  ir ao estado 72
+    parametros_formais           ir ao estado 73
+    comando_vazio                ir ao estado 74
+
+
+Estado 50
+
+   34 declara_func: FUNCTION IDENT $@10 • parametros_formais_ou_vazio DOIS_PONTOS tipo $@11 PONTO_E_VIRGULA bloco
+
+    ABRE_PARENTESES  deslocar, e ir ao estado 71
+
+    $padrão  reduzir usando a regra 49 (comando_vazio)
+
+    parametros_formais_ou_vazio  ir ao estado 75
+    parametros_formais           ir ao estado 73
+    comando_vazio                ir ao estado 74
+
+
+Estado 51
+
+   68 desvio: GOTO • NUMERO
+
+    NUMERO  deslocar, e ir ao estado 76
+
+
+Estado 52
+
+   71 comando_condicional: IF • expressao $@18 THEN comando_sem_rotulo $@19 ELSE comando_sem_rotulo
+
+    MAIS   deslocar, e ir ao estado 77
+    MENOS  deslocar, e ir ao estado 78
+
+    $padrão  reduzir usando a regra 90 (mais_menos_vazio)
+
+    expressao          ir ao estado 79
+    expressao_simples  ir ao estado 80
+    mais_menos_vazio   ir ao estado 81
+
+
+Estado 53
+
+   74 comando_repetitivo: WHILE • $@20 expressao $@21 DO comando_sem_rotulo
+
+    $padrão  reduzir usando a regra 72 ($@20)
+
+    $@20  ir ao estado 82
+
+
+Estado 54
+
+   58 atribuicao_proc: IDENT • $@14 a_continua
+
+    $padrão  reduzir usando a regra 57 ($@14)
+
+    $@14  ir ao estado 83
+
+
+Estado 55
+
+   46 comandos: NUMERO • $@13 comando_sem_rotulo
+
+    $padrão  reduzir usando a regra 45 ($@13)
+
+    $@13  ir ao estado 84
+
+
+Estado 56
+
+  108 leitura: READ • ABRE_PARENTESES leitura_itens FECHA_PARENTESES
+
+    ABRE_PARENTESES  deslocar, e ir ao estado 85
+
+
+Estado 57
+
+  112 escrita: WRITE • ABRE_PARENTESES escreve_itens FECHA_PARENTESES
+
+    ABRE_PARENTESES  deslocar, e ir ao estado 86
+
+
+Estado 58
+
+   52 comando_sem_rotulo: comando_composto •
+
+    $padrão  reduzir usando a regra 52 (comando_sem_rotulo)
+
+
+Estado 59
+
+   44 comando_composto: T_BEGIN comandos • T_END
+   48 comandos: comandos • PONTO_E_VIRGULA comando_sem_rotulo
+
+    T_END            deslocar, e ir ao estado 87
+    PONTO_E_VIRGULA  deslocar, e ir ao estado 88
+
+
+Estado 60
+
+   47 comandos: comando_sem_rotulo •
+
+    $padrão  reduzir usando a regra 47 (comandos)
+
+
+Estado 61
+
+   50 comando_sem_rotulo: atribuicao_proc •
+
+    $padrão  reduzir usando a regra 50 (comando_sem_rotulo)
+
+
+Estado 62
+
+   51 comando_sem_rotulo: desvio •
+
+    $padrão  reduzir usando a regra 51 (comando_sem_rotulo)
+
+
+Estado 63
+
+   53 comando_sem_rotulo: comando_condicional •
+
+    $padrão  reduzir usando a regra 53 (comando_sem_rotulo)
+
+
+Estado 64
+
+   54 comando_sem_rotulo: comando_repetitivo •
+
+    $padrão  reduzir usando a regra 54 (comando_sem_rotulo)
+
+
+Estado 65
+
+   56 comando_sem_rotulo: leitura •
+
+    $padrão  reduzir usando a regra 56 (comando_sem_rotulo)
+
+
+Estado 66
+
+   55 comando_sem_rotulo: escrita •
+
+    $padrão  reduzir usando a regra 55 (comando_sem_rotulo)
+
+
+Estado 67
+
+   26 parte_declara_subrotinas: parte_declara_subrotinas declara_proc $@7 PONTO_E_VIRGULA •
+
+    $padrão  reduzir usando a regra 26 (parte_declara_subrotinas)
+
+
+Estado 68
+
+   11 tipo: TIPO •
+
+    $padrão  reduzir usando a regra 11 (tipo)
+
+
+Estado 69
+
+   19 declara_var: $@5 lista_id_var DOIS_PONTOS tipo • $@6 PONTO_E_VIRGULA
+
+    $padrão  reduzir usando a regra 18 ($@6)
+
+    $@6  ir ao estado 89
+
+
+Estado 70
+
+   20 lista_id_var: lista_id_var VIRGULA IDENT •
+
+    $padrão  reduzir usando a regra 20 (lista_id_var)
+
+
+Estado 71
+
+   37 parametros_formais: ABRE_PARENTESES • parametros FECHA_PARENTESES
+
+    VAR  deslocar, e ir ao estado 90
+
+    $padrão  reduzir usando a regra 43 (var_ou_vazio)
+
+    parametros                ir ao estado 91
+    secao_parametros_formais  ir ao estado 92
+    var_ou_vazio              ir ao estado 93
+
+
+Estado 72
+
+   31 declara_proc: PROCEDURE IDENT $@8 parametros_formais_ou_vazio • $@9 PONTO_E_VIRGULA bloco
+
+    $padrão  reduzir usando a regra 30 ($@9)
+
+    $@9  ir ao estado 94
+
+
+Estado 73
+
+   35 parametros_formais_ou_vazio: parametros_formais •
+
+    $padrão  reduzir usando a regra 35 (parametros_formais_ou_vazio)
+
+
+Estado 74
+
+   36 parametros_formais_ou_vazio: comando_vazio •
+
+    $padrão  reduzir usando a regra 36 (parametros_formais_ou_vazio)
+
+
+Estado 75
+
+   34 declara_func: FUNCTION IDENT $@10 parametros_formais_ou_vazio • DOIS_PONTOS tipo $@11 PONTO_E_VIRGULA bloco
+
+    DOIS_PONTOS  deslocar, e ir ao estado 95
+
+
+Estado 76
+
+   68 desvio: GOTO NUMERO •
+
+    $padrão  reduzir usando a regra 68 (desvio)
+
+
+Estado 77
+
+   88 mais_menos_vazio: MAIS •
+
+    $padrão  reduzir usando a regra 88 (mais_menos_vazio)
+
+
+Estado 78
+
+   89 mais_menos_vazio: MENOS •
+
+    $padrão  reduzir usando a regra 89 (mais_menos_vazio)
+
+
+Estado 79
+
+   71 comando_condicional: IF expressao • $@18 THEN comando_sem_rotulo $@19 ELSE comando_sem_rotulo
+
+    $padrão  reduzir usando a regra 69 ($@18)
+
+    $@18  ir ao estado 96
+
+
+Estado 80
+
+   78 expressao: expressao_simples •
+   79          | expressao_simples • relacao expressao_simples
+   86 expressao_simples: expressao_simples • mais_menos_or termo
+
+    OR           deslocar, e ir ao estado 97
+    MAIOR        deslocar, e ir ao estado 98
+    MENOR        deslocar, e ir ao estado 99
+    IGUAL        deslocar, e ir ao estado 100
+    MAIS         deslocar, e ir ao estado 101
+    MENOS        deslocar, e ir ao estado 102
+    DIFERENTE    deslocar, e ir ao estado 103
+    MENOR_IGUAL  deslocar, e ir ao estado 104
+    MAIOR_IGUAL  deslocar, e ir ao estado 105
+
+    $padrão  reduzir usando a regra 78 (expressao)
+
+    relacao        ir ao estado 106
+    mais_menos_or  ir ao estado 107
+
+
+Estado 81
+
+   87 expressao_simples: mais_menos_vazio • termo
+
+    NOT              deslocar, e ir ao estado 108
+    ABRE_PARENTESES  deslocar, e ir ao estado 109
+    IDENT            deslocar, e ir ao estado 110
+    NUMERO           deslocar, e ir ao estado 111
+    VALOR_BOOL       deslocar, e ir ao estado 112
+
+    termo     ir ao estado 113
+    fator     ir ao estado 114
+    variavel  ir ao estado 115
+    numero    ir ao estado 116
+
+
+Estado 82
+
+   74 comando_repetitivo: WHILE $@20 • expressao $@21 DO comando_sem_rotulo
+
+    MAIS   deslocar, e ir ao estado 77
+    MENOS  deslocar, e ir ao estado 78
+
+    $padrão  reduzir usando a regra 90 (mais_menos_vazio)
+
+    expressao          ir ao estado 117
+    expressao_simples  ir ao estado 80
+    mais_menos_vazio   ir ao estado 81
+
+
+Estado 83
+
+   58 atribuicao_proc: IDENT $@14 • a_continua
+
+    ATRIBUICAO  deslocar, e ir ao estado 118
+
+    ABRE_PARENTESES  reduzir usando a regra 64 ($@16)
+    $padrão          reduzir usando a regra 67 (procedimento_sem_parametro)
+
+    a_continua                  ir ao estado 119
+    chama_procedimento          ir ao estado 120
+    $@16                        ir ao estado 121
+    procedimento_sem_parametro  ir ao estado 122
+
+
+Estado 84
+
+   46 comandos: NUMERO $@13 • comando_sem_rotulo
+
+    T_BEGIN  deslocar, e ir ao estado 43
+    GOTO     deslocar, e ir ao estado 51
+    IF       deslocar, e ir ao estado 52
+    WHILE    deslocar, e ir ao estado 53
+    IDENT    deslocar, e ir ao estado 54
+    READ     deslocar, e ir ao estado 56
+    WRITE    deslocar, e ir ao estado 57
+
+    comando_composto     ir ao estado 58
+    comando_sem_rotulo   ir ao estado 123
+    atribuicao_proc      ir ao estado 61
+    desvio               ir ao estado 62
+    comando_condicional  ir ao estado 63
+    comando_repetitivo   ir ao estado 64
+    leitura              ir ao estado 65
+    escrita              ir ao estado 66
+
+
+Estado 85
+
+  108 leitura: READ ABRE_PARENTESES • leitura_itens FECHA_PARENTESES
+
+    IDENT  deslocar, e ir ao estado 124
+
+    leitura_itens  ir ao estado 125
+    item_leitura   ir ao estado 126
+
+
+Estado 86
+
+  112 escrita: WRITE ABRE_PARENTESES • escreve_itens FECHA_PARENTESES
+
+    MAIS   deslocar, e ir ao estado 77
+    MENOS  deslocar, e ir ao estado 78
+
+    $padrão  reduzir usando a regra 90 (mais_menos_vazio)
+
+    expressao          ir ao estado 127
+    expressao_simples  ir ao estado 80
+    mais_menos_vazio   ir ao estado 81
+    escreve_itens      ir ao estado 128
+
+
+Estado 87
+
+   44 comando_composto: T_BEGIN comandos T_END •
+
+    $padrão  reduzir usando a regra 44 (comando_composto)
+
+
+Estado 88
+
+   48 comandos: comandos PONTO_E_VIRGULA • comando_sem_rotulo
+
+    T_BEGIN  deslocar, e ir ao estado 43
+    GOTO     deslocar, e ir ao estado 51
+    IF       deslocar, e ir ao estado 52
+    WHILE    deslocar, e ir ao estado 53
+    IDENT    deslocar, e ir ao estado 54
+    READ     deslocar, e ir ao estado 56
+    WRITE    deslocar, e ir ao estado 57
+
+    comando_composto     ir ao estado 58
+    comando_sem_rotulo   ir ao estado 129
+    atribuicao_proc      ir ao estado 61
+    desvio               ir ao estado 62
+    comando_condicional  ir ao estado 63
+    comando_repetitivo   ir ao estado 64
+    leitura              ir ao estado 65
+    escrita              ir ao estado 66
+
+
+Estado 89
+
+   19 declara_var: $@5 lista_id_var DOIS_PONTOS tipo $@6 • PONTO_E_VIRGULA
+
+    PONTO_E_VIRGULA  deslocar, e ir ao estado 130
+
+
+Estado 90
+
+   42 var_ou_vazio: VAR •
+
+    $padrão  reduzir usando a regra 42 (var_ou_vazio)
+
+
+Estado 91
+
+   37 parametros_formais: ABRE_PARENTESES parametros • FECHA_PARENTESES
+   38 parametros: parametros • PONTO_E_VIRGULA secao_parametros_formais
+
+    PONTO_E_VIRGULA   deslocar, e ir ao estado 131
+    FECHA_PARENTESES  deslocar, e ir ao estado 132
+
+
+Estado 92
+
+   39 parametros: secao_parametros_formais •
+
+    $padrão  reduzir usando a regra 39 (parametros)
+
+
+Estado 93
+
+   41 secao_parametros_formais: var_ou_vazio • $@12 lista_idents DOIS_PONTOS tipo
+
+    $padrão  reduzir usando a regra 40 ($@12)
+
+    $@12  ir ao estado 133
+
+
+Estado 94
+
+   31 declara_proc: PROCEDURE IDENT $@8 parametros_formais_ou_vazio $@9 • PONTO_E_VIRGULA bloco
+
+    PONTO_E_VIRGULA  deslocar, e ir ao estado 134
+
+
+Estado 95
+
+   34 declara_func: FUNCTION IDENT $@10 parametros_formais_ou_vazio DOIS_PONTOS • tipo $@11 PONTO_E_VIRGULA bloco
+
+    TIPO  deslocar, e ir ao estado 68
+
+    tipo  ir ao estado 135
+
+
+Estado 96
+
+   71 comando_condicional: IF expressao $@18 • THEN comando_sem_rotulo $@19 ELSE comando_sem_rotulo
+
+    THEN  deslocar, e ir ao estado 136
+
+
+Estado 97
+
+   93 mais_menos_or: OR •
+
+    $padrão  reduzir usando a regra 93 (mais_menos_or)
+
+
+Estado 98
+
+   85 relacao: MAIOR •
+
+    $padrão  reduzir usando a regra 85 (relacao)
+
+
+Estado 99
+
+   82 relacao: MENOR •
+
+    $padrão  reduzir usando a regra 82 (relacao)
+
+
+Estado 100
+
+   80 relacao: IGUAL •
+
+    $padrão  reduzir usando a regra 80 (relacao)
+
+
+Estado 101
+
+   91 mais_menos_or: MAIS •
+
+    $padrão  reduzir usando a regra 91 (mais_menos_or)
+
+
+Estado 102
+
+   92 mais_menos_or: MENOS •
+
+    $padrão  reduzir usando a regra 92 (mais_menos_or)
+
+
+Estado 103
+
+   81 relacao: DIFERENTE •
+
+    $padrão  reduzir usando a regra 81 (relacao)
+
+
+Estado 104
+
+   83 relacao: MENOR_IGUAL •
+
+    $padrão  reduzir usando a regra 83 (relacao)
+
+
+Estado 105
+
+   84 relacao: MAIOR_IGUAL •
+
+    $padrão  reduzir usando a regra 84 (relacao)
+
+
+Estado 106
+
+   79 expressao: expressao_simples relacao • expressao_simples
+
+    MAIS   deslocar, e ir ao estado 77
+    MENOS  deslocar, e ir ao estado 78
+
+    $padrão  reduzir usando a regra 90 (mais_menos_vazio)
+
+    expressao_simples  ir ao estado 137
+    mais_menos_vazio   ir ao estado 81
+
+
+Estado 107
+
+   86 expressao_simples: expressao_simples mais_menos_or • termo
+
+    NOT              deslocar, e ir ao estado 108
+    ABRE_PARENTESES  deslocar, e ir ao estado 109
+    IDENT            deslocar, e ir ao estado 110
+    NUMERO           deslocar, e ir ao estado 111
+    VALOR_BOOL       deslocar, e ir ao estado 112
+
+    termo     ir ao estado 138
+    fator     ir ao estado 114
+    variavel  ir ao estado 115
+    numero    ir ao estado 116
+
+
+Estado 108
+
+  105 fator: NOT • fator
+
+    NOT              deslocar, e ir ao estado 108
+    ABRE_PARENTESES  deslocar, e ir ao estado 109
+    IDENT            deslocar, e ir ao estado 110
+    NUMERO           deslocar, e ir ao estado 111
+    VALOR_BOOL       deslocar, e ir ao estado 112
+
+    fator     ir ao estado 139
+    variavel  ir ao estado 115
+    numero    ir ao estado 116
+
+
+Estado 109
+
+  104 fator: ABRE_PARENTESES • expressao FECHA_PARENTESES
+
+    MAIS   deslocar, e ir ao estado 77
+    MENOS  deslocar, e ir ao estado 78
+
+    $padrão  reduzir usando a regra 90 (mais_menos_vazio)
+
+    expressao          ir ao estado 140
+    expressao_simples  ir ao estado 80
+    mais_menos_vazio   ir ao estado 81
+
+
+Estado 110
+
+  106 variavel: IDENT •
+
+    $padrão  reduzir usando a regra 106 (variavel)
+
+
+Estado 111
+
+  107 numero: NUMERO •
+
+    $padrão  reduzir usando a regra 107 (numero)
+
+
+Estado 112
+
+  103 fator: VALOR_BOOL •
+
+    $padrão  reduzir usando a regra 103 (fator)
+
+
+Estado 113
+
+   87 expressao_simples: mais_menos_vazio termo •
+   94 termo: termo • vezes_div_and fator
+
+    AND    deslocar, e ir ao estado 141
+    DIV    deslocar, e ir ao estado 142
+    VEZES  deslocar, e ir ao estado 143
+
+    $padrão  reduzir usando a regra 87 (expressao_simples)
+
+    vezes_div_and  ir ao estado 144
+
+
+Estado 114
+
+   95 termo: fator •
+
+    $padrão  reduzir usando a regra 95 (termo)
+
+
+Estado 115
+
+  101 fator: variavel • procedimento_ou_vazio
+
+    ABRE_PARENTESES  reduzir usando a regra 64 ($@16)
+    $padrão          reduzir usando a regra 49 (comando_vazio)
+
+    comando_vazio          ir ao estado 145
+    chama_procedimento     ir ao estado 146
+    $@16                   ir ao estado 121
+    procedimento_ou_vazio  ir ao estado 147
+
+
+Estado 116
+
+  102 fator: numero •
+
+    $padrão  reduzir usando a regra 102 (fator)
+
+
+Estado 117
+
+   74 comando_repetitivo: WHILE $@20 expressao • $@21 DO comando_sem_rotulo
+
+    $padrão  reduzir usando a regra 73 ($@21)
+
+    $@21  ir ao estado 148
+
+
+Estado 118
+
+   60 a_continua: ATRIBUICAO • $@15 atribuicao
+
+    $padrão  reduzir usando a regra 59 ($@15)
+
+    $@15  ir ao estado 149
+
+
+Estado 119
+
+   58 atribuicao_proc: IDENT $@14 a_continua •
+
+    $padrão  reduzir usando a regra 58 (atribuicao_proc)
+
+
+Estado 120
+
+   62 a_continua: chama_procedimento •
+
+    $padrão  reduzir usando a regra 62 (a_continua)
+
+
+Estado 121
+
+   66 chama_procedimento: $@16 • ABRE_PARENTESES $@17 lista_expressoes FECHA_PARENTESES
+
+    ABRE_PARENTESES  deslocar, e ir ao estado 150
+
+
+Estado 122
+
+   61 a_continua: procedimento_sem_parametro •
+
+    $padrão  reduzir usando a regra 61 (a_continua)
+
+
+Estado 123
+
+   46 comandos: NUMERO $@13 comando_sem_rotulo •
+
+    $padrão  reduzir usando a regra 46 (comandos)
+
+
+Estado 124
+
+  111 item_leitura: IDENT •
+
+    $padrão  reduzir usando a regra 111 (item_leitura)
+
+
+Estado 125
+
+  108 leitura: READ ABRE_PARENTESES leitura_itens • FECHA_PARENTESES
+  109 leitura_itens: leitura_itens • VIRGULA item_leitura
+
+    VIRGULA           deslocar, e ir ao estado 151
+    FECHA_PARENTESES  deslocar, e ir ao estado 152
+
+
+Estado 126
+
+  110 leitura_itens: item_leitura •
+
+    $padrão  reduzir usando a regra 110 (leitura_itens)
+
+
+Estado 127
+
+  114 escreve_itens: expressao •
+
+    $padrão  reduzir usando a regra 114 (escreve_itens)
+
+
+Estado 128
+
+  112 escrita: WRITE ABRE_PARENTESES escreve_itens • FECHA_PARENTESES
+  113 escreve_itens: escreve_itens • VIRGULA expressao
+
+    VIRGULA           deslocar, e ir ao estado 153
+    FECHA_PARENTESES  deslocar, e ir ao estado 154
+
+
+Estado 129
+
+   48 comandos: comandos PONTO_E_VIRGULA comando_sem_rotulo •
+
+    $padrão  reduzir usando a regra 48 (comandos)
+
+
+Estado 130
+
+   19 declara_var: $@5 lista_id_var DOIS_PONTOS tipo $@6 PONTO_E_VIRGULA •
+
+    $padrão  reduzir usando a regra 19 (declara_var)
+
+
+Estado 131
+
+   38 parametros: parametros PONTO_E_VIRGULA • secao_parametros_formais
+
+    VAR  deslocar, e ir ao estado 90
+
+    $padrão  reduzir usando a regra 43 (var_ou_vazio)
+
+    secao_parametros_formais  ir ao estado 155
+    var_ou_vazio              ir ao estado 93
+
+
+Estado 132
+
+   37 parametros_formais: ABRE_PARENTESES parametros FECHA_PARENTESES •
+
+    $padrão  reduzir usando a regra 37 (parametros_formais)
+
+
+Estado 133
+
+   41 secao_parametros_formais: var_ou_vazio $@12 • lista_idents DOIS_PONTOS tipo
+
+    IDENT  deslocar, e ir ao estado 7
+
+    lista_idents  ir ao estado 156
+    ident_params  ir ao estado 9
+
+
+Estado 134
+
+   31 declara_proc: PROCEDURE IDENT $@8 parametros_formais_ou_vazio $@9 PONTO_E_VIRGULA • bloco
+
+    NUMERO  deslocar, e ir ao estado 14
+
+    $padrão  reduzir usando a regra 49 (comando_vazio)
+
+    bloco                 ir ao estado 157
+    parte_declara_rotulo  ir ao estado 16
+    comando_vazio         ir ao estado 17
+
+
+Estado 135
+
+   34 declara_func: FUNCTION IDENT $@10 parametros_formais_ou_vazio DOIS_PONTOS tipo • $@11 PONTO_E_VIRGULA bloco
+
+    $padrão  reduzir usando a regra 33 ($@11)
+
+    $@11  ir ao estado 158
+
+
+Estado 136
+
+   71 comando_condicional: IF expressao $@18 THEN • comando_sem_rotulo $@19 ELSE comando_sem_rotulo
+
+    T_BEGIN  deslocar, e ir ao estado 43
+    GOTO     deslocar, e ir ao estado 51
+    IF       deslocar, e ir ao estado 52
+    WHILE    deslocar, e ir ao estado 53
+    IDENT    deslocar, e ir ao estado 54
+    READ     deslocar, e ir ao estado 56
+    WRITE    deslocar, e ir ao estado 57
+
+    comando_composto     ir ao estado 58
+    comando_sem_rotulo   ir ao estado 159
+    atribuicao_proc      ir ao estado 61
+    desvio               ir ao estado 62
+    comando_condicional  ir ao estado 63
+    comando_repetitivo   ir ao estado 64
+    leitura              ir ao estado 65
+    escrita              ir ao estado 66
+
+
+Estado 137
+
+   79 expressao: expressao_simples relacao expressao_simples •
+   86 expressao_simples: expressao_simples • mais_menos_or termo
+
+    OR     deslocar, e ir ao estado 97
+    MAIS   deslocar, e ir ao estado 101
+    MENOS  deslocar, e ir ao estado 102
+
+    $padrão  reduzir usando a regra 79 (expressao)
+
+    mais_menos_or  ir ao estado 107
+
+
+Estado 138
+
+   86 expressao_simples: expressao_simples mais_menos_or termo •
+   94 termo: termo • vezes_div_and fator
+
+    AND    deslocar, e ir ao estado 141
+    DIV    deslocar, e ir ao estado 142
+    VEZES  deslocar, e ir ao estado 143
+
+    $padrão  reduzir usando a regra 86 (expressao_simples)
+
+    vezes_div_and  ir ao estado 144
+
+
+Estado 139
+
+  105 fator: NOT fator •
+
+    $padrão  reduzir usando a regra 105 (fator)
+
+
+Estado 140
+
+  104 fator: ABRE_PARENTESES expressao • FECHA_PARENTESES
+
+    FECHA_PARENTESES  deslocar, e ir ao estado 160
+
+
+Estado 141
+
+   98 vezes_div_and: AND •
+
+    $padrão  reduzir usando a regra 98 (vezes_div_and)
+
+
+Estado 142
+
+   97 vezes_div_and: DIV •
+
+    $padrão  reduzir usando a regra 97 (vezes_div_and)
+
+
+Estado 143
+
+   96 vezes_div_and: VEZES •
+
+    $padrão  reduzir usando a regra 96 (vezes_div_and)
+
+
+Estado 144
+
+   94 termo: termo vezes_div_and • fator
+
+    NOT              deslocar, e ir ao estado 108
+    ABRE_PARENTESES  deslocar, e ir ao estado 109
+    IDENT            deslocar, e ir ao estado 110
+    NUMERO           deslocar, e ir ao estado 111
+    VALOR_BOOL       deslocar, e ir ao estado 112
+
+    fator     ir ao estado 161
+    variavel  ir ao estado 115
+    numero    ir ao estado 116
+
+
+Estado 145
+
+  100 procedimento_ou_vazio: comando_vazio •
+
+    $padrão  reduzir usando a regra 100 (procedimento_ou_vazio)
+
+
+Estado 146
+
+   99 procedimento_ou_vazio: chama_procedimento •
+
+    $padrão  reduzir usando a regra 99 (procedimento_ou_vazio)
+
+
+Estado 147
+
+  101 fator: variavel procedimento_ou_vazio •
+
+    $padrão  reduzir usando a regra 101 (fator)
+
+
+Estado 148
+
+   74 comando_repetitivo: WHILE $@20 expressao $@21 • DO comando_sem_rotulo
+
+    DO  deslocar, e ir ao estado 162
+
+
+Estado 149
+
+   60 a_continua: ATRIBUICAO $@15 • atribuicao
+
+    MAIS   deslocar, e ir ao estado 77
+    MENOS  deslocar, e ir ao estado 78
+
+    $padrão  reduzir usando a regra 90 (mais_menos_vazio)
+
+    atribuicao         ir ao estado 163
+    expressao          ir ao estado 164
+    expressao_simples  ir ao estado 80
+    mais_menos_vazio   ir ao estado 81
+
+
+Estado 150
+
+   66 chama_procedimento: $@16 ABRE_PARENTESES • $@17 lista_expressoes FECHA_PARENTESES
+
+    $padrão  reduzir usando a regra 65 ($@17)
+
+    $@17  ir ao estado 165
+
+
+Estado 151
+
+  109 leitura_itens: leitura_itens VIRGULA • item_leitura
+
+    IDENT  deslocar, e ir ao estado 124
+
+    item_leitura  ir ao estado 166
+
+
+Estado 152
+
+  108 leitura: READ ABRE_PARENTESES leitura_itens FECHA_PARENTESES •
+
+    $padrão  reduzir usando a regra 108 (leitura)
+
+
+Estado 153
+
+  113 escreve_itens: escreve_itens VIRGULA • expressao
+
+    MAIS   deslocar, e ir ao estado 77
+    MENOS  deslocar, e ir ao estado 78
+
+    $padrão  reduzir usando a regra 90 (mais_menos_vazio)
+
+    expressao          ir ao estado 167
+    expressao_simples  ir ao estado 80
+    mais_menos_vazio   ir ao estado 81
+
+
+Estado 154
+
+  112 escrita: WRITE ABRE_PARENTESES escreve_itens FECHA_PARENTESES •
+
+    $padrão  reduzir usando a regra 112 (escrita)
+
+
+Estado 155
+
+   38 parametros: parametros PONTO_E_VIRGULA secao_parametros_formais •
+
+    $padrão  reduzir usando a regra 38 (parametros)
+
+
+Estado 156
+
+   22 lista_idents: lista_idents • VIRGULA ident_params
+   41 secao_parametros_formais: var_ou_vazio $@12 lista_idents • DOIS_PONTOS tipo
+
+    DOIS_PONTOS  deslocar, e ir ao estado 168
+    VIRGULA      deslocar, e ir ao estado 10
+
+
+Estado 157
+
+   31 declara_proc: PROCEDURE IDENT $@8 parametros_formais_ou_vazio $@9 PONTO_E_VIRGULA bloco •
+
+    $padrão  reduzir usando a regra 31 (declara_proc)
+
+
+Estado 158
+
+   34 declara_func: FUNCTION IDENT $@10 parametros_formais_ou_vazio DOIS_PONTOS tipo $@11 • PONTO_E_VIRGULA bloco
+
+    PONTO_E_VIRGULA  deslocar, e ir ao estado 169
+
+
+Estado 159
+
+   71 comando_condicional: IF expressao $@18 THEN comando_sem_rotulo • $@19 ELSE comando_sem_rotulo
+
+    $padrão  reduzir usando a regra 70 ($@19)
+
+    $@19  ir ao estado 170
+
+
+Estado 160
+
+  104 fator: ABRE_PARENTESES expressao FECHA_PARENTESES •
+
+    $padrão  reduzir usando a regra 104 (fator)
+
+
+Estado 161
+
+   94 termo: termo vezes_div_and fator •
+
+    $padrão  reduzir usando a regra 94 (termo)
+
+
+Estado 162
+
+   74 comando_repetitivo: WHILE $@20 expressao $@21 DO • comando_sem_rotulo
+
+    T_BEGIN  deslocar, e ir ao estado 43
+    GOTO     deslocar, e ir ao estado 51
+    IF       deslocar, e ir ao estado 52
+    WHILE    deslocar, e ir ao estado 53
+    IDENT    deslocar, e ir ao estado 54
+    READ     deslocar, e ir ao estado 56
+    WRITE    deslocar, e ir ao estado 57
+
+    comando_composto     ir ao estado 58
+    comando_sem_rotulo   ir ao estado 171
+    atribuicao_proc      ir ao estado 61
+    desvio               ir ao estado 62
+    comando_condicional  ir ao estado 63
+    comando_repetitivo   ir ao estado 64
+    leitura              ir ao estado 65
+    escrita              ir ao estado 66
+
+
+Estado 163
+
+   60 a_continua: ATRIBUICAO $@15 atribuicao •
+
+    $padrão  reduzir usando a regra 60 (a_continua)
+
+
+Estado 164
+
+   63 atribuicao: expressao •
+
+    $padrão  reduzir usando a regra 63 (atribuicao)
+
+
+Estado 165
+
+   66 chama_procedimento: $@16 ABRE_PARENTESES $@17 • lista_expressoes FECHA_PARENTESES
+
+    MAIS   deslocar, e ir ao estado 77
+    MENOS  deslocar, e ir ao estado 78
+
+    $padrão  reduzir usando a regra 90 (mais_menos_vazio)
+
+    lista_expressoes   ir ao estado 172
+    expressao          ir ao estado 173
+    expressao_simples  ir ao estado 80
+    mais_menos_vazio   ir ao estado 81
+
+
+Estado 166
+
+  109 leitura_itens: leitura_itens VIRGULA item_leitura •
+
+    $padrão  reduzir usando a regra 109 (leitura_itens)
+
+
+Estado 167
+
+  113 escreve_itens: escreve_itens VIRGULA expressao •
+
+    $padrão  reduzir usando a regra 113 (escreve_itens)
+
+
+Estado 168
+
+   41 secao_parametros_formais: var_ou_vazio $@12 lista_idents DOIS_PONTOS • tipo
+
+    TIPO  deslocar, e ir ao estado 68
+
+    tipo  ir ao estado 174
+
+
+Estado 169
+
+   34 declara_func: FUNCTION IDENT $@10 parametros_formais_ou_vazio DOIS_PONTOS tipo $@11 PONTO_E_VIRGULA • bloco
+
+    NUMERO  deslocar, e ir ao estado 14
+
+    $padrão  reduzir usando a regra 49 (comando_vazio)
+
+    bloco                 ir ao estado 175
+    parte_declara_rotulo  ir ao estado 16
+    comando_vazio         ir ao estado 17
+
+
+Estado 170
+
+   71 comando_condicional: IF expressao $@18 THEN comando_sem_rotulo $@19 • ELSE comando_sem_rotulo
+
+    ELSE  deslocar, e ir ao estado 176
+
+
+Estado 171
+
+   74 comando_repetitivo: WHILE $@20 expressao $@21 DO comando_sem_rotulo •
+
+    $padrão  reduzir usando a regra 74 (comando_repetitivo)
+
+
+Estado 172
+
+   66 chama_procedimento: $@16 ABRE_PARENTESES $@17 lista_expressoes • FECHA_PARENTESES
+
+    FECHA_PARENTESES  deslocar, e ir ao estado 177
+
+
+Estado 173
+
+   76 lista_expressoes: expressao • $@22 VIRGULA lista_expressoes
+   77                 | expressao •
+
+    FECHA_PARENTESES  reduzir usando a regra 77 (lista_expressoes)
+    $padrão           reduzir usando a regra 75 ($@22)
+
+    $@22  ir ao estado 178
+
+
+Estado 174
+
+   41 secao_parametros_formais: var_ou_vazio $@12 lista_idents DOIS_PONTOS tipo •
+
+    $padrão  reduzir usando a regra 41 (secao_parametros_formais)
+
+
+Estado 175
+
+   34 declara_func: FUNCTION IDENT $@10 parametros_formais_ou_vazio DOIS_PONTOS tipo $@11 PONTO_E_VIRGULA bloco •
+
+    $padrão  reduzir usando a regra 34 (declara_func)
+
+
+Estado 176
+
+   71 comando_condicional: IF expressao $@18 THEN comando_sem_rotulo $@19 ELSE • comando_sem_rotulo
+
+    T_BEGIN  deslocar, e ir ao estado 43
+    GOTO     deslocar, e ir ao estado 51
+    IF       deslocar, e ir ao estado 52
+    WHILE    deslocar, e ir ao estado 53
+    IDENT    deslocar, e ir ao estado 54
+    READ     deslocar, e ir ao estado 56
+    WRITE    deslocar, e ir ao estado 57
+
+    comando_composto     ir ao estado 58
+    comando_sem_rotulo   ir ao estado 179
+    atribuicao_proc      ir ao estado 61
+    desvio               ir ao estado 62
+    comando_condicional  ir ao estado 63
+    comando_repetitivo   ir ao estado 64
+    leitura              ir ao estado 65
+    escrita              ir ao estado 66
+
+
+Estado 177
+
+   66 chama_procedimento: $@16 ABRE_PARENTESES $@17 lista_expressoes FECHA_PARENTESES •
+
+    $padrão  reduzir usando a regra 66 (chama_procedimento)
+
+
+Estado 178
+
+   76 lista_expressoes: expressao $@22 • VIRGULA lista_expressoes
+
+    VIRGULA  deslocar, e ir ao estado 180
+
+
+Estado 179
+
+   71 comando_condicional: IF expressao $@18 THEN comando_sem_rotulo $@19 ELSE comando_sem_rotulo •
+
+    $padrão  reduzir usando a regra 71 (comando_condicional)
+
+
+Estado 180
+
+   76 lista_expressoes: expressao $@22 VIRGULA • lista_expressoes
+
+    MAIS   deslocar, e ir ao estado 77
+    MENOS  deslocar, e ir ao estado 78
+
+    $padrão  reduzir usando a regra 90 (mais_menos_vazio)
+
+    lista_expressoes   ir ao estado 181
+    expressao          ir ao estado 173
+    expressao_simples  ir ao estado 80
+    mais_menos_vazio   ir ao estado 81
+
+
+Estado 181
+
+   76 lista_expressoes: expressao $@22 VIRGULA lista_expressoes •
+
+    $padrão  reduzir usando a regra 76 (lista_expressoes)
