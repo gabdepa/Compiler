@@ -11,6 +11,6 @@ begin
   x:=x-1;
   goto 100;
 
-  200: write(0);
+  200: write(0)
 
 end.

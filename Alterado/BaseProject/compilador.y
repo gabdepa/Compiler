@@ -406,7 +406,7 @@ comandos:
 
 comando_vazio:;
 
-numero_teste: 
+label_goto: 
       NUMERO
       {
       sptr = busca_simbolo(&ts, token);
@@ -420,6 +420,30 @@ numero_teste:
       sprintf(buffer_mepa, "ENRT %d, %d", nivel_lex, num_vars);
       geraCodigo(NULL, buffer_mepa);
    } DOIS_PONTOS comando_sem_rotulo; 
+
+
+   /*
+   REGRA 21. 
+      <desvios> ::= goto <número>
+*/
+//    DSVR p,j,k"onde p rótulo mepa
+//    para onde desviar, j é o nível léxico onde está declarado o
+//    rótulo e k é o nível léxico corrente (k ≤ j)
+desvio: GOTO NUMERO{
+   sptr = busca_simbolo(&ts, token);
+   if(!sptr){
+      fprintf(stderr, "ERRO: Rótulo do goto não existe!\n"); 
+      exit(1);
+   }
+   if(sptr->nivel > nivel_lex)
+   {
+      fprintf(stderr, "ERRO: Rótulo não encontrado!\n");
+      exit(1);
+   }
+   sprintf(buffer_mepa, "DSVR %d, %d, %d", atoi(sptr->identificador),sptr->nivel, nivel_lex);
+   geraCodigo(NULL, buffer_mepa);
+} ;
+
 /* 
    REGRA 18
    <comando sem rótulo> ::=
@@ -432,7 +456,7 @@ numero_teste:
 */
 comando_sem_rotulo: 
                   atribuicao_proc
-                  | numero_teste 
+                  | label_goto 
                   | desvio 
                   | comando_composto
                   | comando_condicional
@@ -538,22 +562,7 @@ procedimento_sem_parametro:
                sprintf(buffer_mepa, "CHPR R%02d, %d", sptr_var_proc->conteudo.proc.rotulo, nivel_lex);
                geraCodigo(NULL, buffer_mepa);
               }
-/*
-   REGRA 21. 
-      <desvios> ::= goto <número>
-*/
-desvio: GOTO NUMERO{
-//    DSVR p,j,k"onde p rótulo mepa
-//    para onde desviar, j é o nível léxico onde está declarado o
-//    rótulo e k é o nível léxico corrente (k ≤ j)
-   sptr = busca_simbolo(&ts, token);
-   if(!sptr){
-      fprintf(stderr, "ERRO:\n Rotulo do goto nao existe\n"); 
-      exit(1);
-   }
-   sprintf(buffer_mepa, "DSVR %d, %d, %d", atoi(sptr->identificador),sptr->nivel, nivel_lex);
-   geraCodigo(NULL, buffer_mepa);
-} PONTO_E_VIRGULA comando_sem_rotulo;
+
 
 /*
    REGRA 22
@@ -584,13 +593,20 @@ comando_condicional: IF
                         geraCodigo(rot_str, "NADA");
 
                      } 
-                     ELSE comando_sem_rotulo
-                     {
+                     else_ou_vazio
+                     // ELSE comando_sem_rotulo
+                     // {
+                     //    sprintf(rot_str, "R%02d", pilha_rotulos_topo(&pilha_rotulos));
+                     //    geraCodigo(rot_str, "NADA");
+                     //    pilha_rotulos_desempilhar(&pilha_rotulos);
+                     // }  
+;
+
+else_ou_vazio: ELSE comando_sem_rotulo {
                         sprintf(rot_str, "R%02d", pilha_rotulos_topo(&pilha_rotulos));
                         geraCodigo(rot_str, "NADA");
                         pilha_rotulos_desempilhar(&pilha_rotulos);
-                     }  
-;
+                     } | comando_vazio;
 
 /* 
    REGRA 23
